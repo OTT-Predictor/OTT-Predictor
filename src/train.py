@@ -168,6 +168,8 @@ def main():
         print(f"Epoch [{epoch+1}/{config.NUM_EPOCHS}] | "
               f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | "
               f"Val Accuracy: {val_metrics['accuracy']:.4f} | Val F1: {val_metrics['f1_score']:.4f} | "
+              f"Val Precision: {val_metrics['precision']:.4f} | " # <--- 정밀도 출력 추가
+              f"Val Recall: {val_metrics['recall']:.4f} | "       # <--- 재현율 출력 추가
               f"Val ROC_AUC: {val_metrics['roc_auc']:.4f}")
 
         # 현재 검증 F1 점수가 이전에 기록된 최고 F1 점수보다 좋으면
