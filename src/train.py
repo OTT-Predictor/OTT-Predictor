@@ -8,6 +8,7 @@ import os
 import numpy as np
 import pandas as pd # WIDE_INPUT_DIM 결정 시 임시로 DataFrame 정보를 볼 때 사용될 수 있음
 from tqdm import tqdm # 학습 진행 상황을 보여주는 막대바 라이브러리
+from sklearn.model_selection import train_test_split # sklearn 임포트 추가
 
 # 우리 프로젝트의 다른 파일들을 불러옵니다.
 from . import config # 설정값 (config.py)
@@ -126,12 +127,25 @@ def main():
     # MovieSuccessDataset 객체를 만듭니다. (전처리된 데이터 파일 경로 사용)
     full_dataset = MovieSuccessDataset(data_path=config.PROCESSED_DATA_PATH, mode='train')
 
-    # 전체 데이터셋을 학습용(train)과 검증용(validation)으로 나눕니다. (예: 80% 학습, 20% 검증)
-    # random_split은 데이터를 무작위로 섞어서 나눠줍니다. (시드 고정으로 재현 가능)
-    train_size = int(0.8 * len(full_dataset))
-    val_size = len(full_dataset) - train_size
-    train_dataset, val_dataset = random_split(full_dataset, [train_size, val_size],
-                                              generator=torch.Generator().manual_seed(config.RANDOM_SEED))
+    # full_dataset.targets_data 는 Dataset 클래스에서 로드한 타겟 레이블 NumPy 배열이라고 가정
+    # (만약 Dataset 클래스에 targets_data 속성이 없다면, full_dataset.dataframe[config.TARGET_COL].values 사용)
+    targets_for_stratify = full_dataset.targets_data 
+
+    # 전체 데이터셋의 인덱스를 만듭니다.
+    indices = list(range(len(full_dataset)))
+    train_indices, val_indices = train_test_split(
+        indices,
+        test_size=0.2, # 검증 데이터 비율 (config 파일로 옮겨도 좋음)
+        stratify=targets_for_stratify, # 이 부분을 통해 계층적 분할 수행
+        random_state=config.RANDOM_SEED # 재현성을 위해 random_state 설정
+    )
+    # 분할된 인덱스를 사용하여 Subset을 만듭니다.
+    from torch.utils.data import Subset # Subset 임포트 추가
+    train_dataset = Subset(full_dataset, train_indices)
+    val_dataset = Subset(full_dataset, val_indices)
+
+    print(f"Training set size: {len(train_dataset)}")
+    print(f"Validation set size: {len(val_dataset)}")
 
     # DataLoader: Dataset에서 데이터를 배치 크기만큼 가져오고, 섞어주는(shuffle) 등의 역할을 합니다.
     train_loader = DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=0)
@@ -157,12 +171,30 @@ def main():
     # --- 4. 학습 루프 실행 ---
     print("\n--- Starting Training ---")
     best_val_f1 = 0.0 # 가장 좋았던 검증 F1 점수를 기록할 변수 (또는 다른 지표 사용 가능)
+    history = { # 학습 과정을 기록할 딕셔너리
+        'train_loss': [],
+        'val_loss': [],
+        'val_accuracy': [],
+        'val_precision': [],
+        'val_recall': [],
+        'val_f1': [],
+        'val_roc_auc': []
+    }
 
     for epoch in range(config.NUM_EPOCHS): # 정해진 에포크 수만큼 반복
         # 한 에포크 학습 실행
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
         # 한 에포크 학습 후 검증 데이터로 성능 평가
         val_loss, val_metrics = evaluate(model, val_loader, criterion, device)
+
+        # history 딕셔너리에 현재 에포크 결과 기록
+        history['train_loss'].append(train_loss)
+        history['val_loss'].append(val_loss)
+        history['val_accuracy'].append(val_metrics['accuracy'])
+        history['val_precision'].append(val_metrics['precision'])
+        history['val_recall'].append(val_metrics['recall'])
+        history['val_f1'].append(val_metrics['f1_score'])
+        history['val_roc_auc'].append(val_metrics['roc_auc'])
 
         # 현재 에포크의 학습 결과 출력
         print(f"Epoch [{epoch+1}/{config.NUM_EPOCHS}] | "
@@ -181,6 +213,11 @@ def main():
             print(f"Best F1 score improved to {best_val_f1:.4f}. Model checkpoint saved to {config.MODEL_WEIGHTS_PATH}")
 
     print("--- Training Finished ---")
+    # 학습 완료 후 history를 파일로 저장 (예: pickle)
+    import pickle
+    with open(os.path.join(config.MODEL_DIR, 'training_history.pkl'), 'wb') as f:
+        pickle.dump(history, f)
+    print("Training history saved.")
 
     # (선택 사항) 학습이 모두 끝난 후, 가장 성능이 좋았던 모델을 불러와서
     # 별도의 테스트 데이터셋으로 최종 성능을 평가할 수 있습니다.
