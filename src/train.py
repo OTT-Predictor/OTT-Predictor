@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd # WIDE_INPUT_DIM 결정 시 임시로 DataFrame 정보를 볼 때 사용될 수 있음
 from tqdm import tqdm # 학습 진행 상황을 보여주는 막대바 라이브러리
 from sklearn.model_selection import train_test_split # sklearn 임포트 추가
+from torch.optim.lr_scheduler import ReduceLROnPlateau # 학습률 스케줄러 예시
 
 # W&B 라이브러리 임포트
 import wandb
@@ -90,37 +91,22 @@ def parse_deep_hidden_dims(dims_str):
 
 def main():
     """메인 학습 파이프라인을 실행하는 함수입니다."""
-    seed_everything(config.RANDOM_SEED) # 결과 재현을 위해 랜덤 시드 고정
-    device = config.DEVICE # 사용할 장치 (GPU 또는 CPU)
-    print(f"Using device: {device}")
-
-    # --- W&B 초기화 ---
-    # wandb.init()을 호출하여 새로운 실험(run)을 시작합니다.
-    # project: W&B 대시보드에서 이 실험이 속할 프로젝트 이름 (없으면 새로 생성됨)
-    # entity: 사용자 또는 팀 이름 (wandb.ai 가입 시 설정한 username)
-    # config: 이 실험에 사용된 하이퍼파라미터들을 기록 (W&B 대시보드에서 확인 가능)
-    #         config.py의 내용을 딕셔너리 형태로 전달하거나, 주요 값만 선택하여 전달 가능
-    wandb_config = {
-        "learning_rate": config.LEARNING_RATE,
-        "batch_size": config.BATCH_SIZE,
-        "num_epochs": config.NUM_EPOCHS,
-        "bert_model_name": config.BERT_MODEL_NAME,
-        "deep_hidden_dims": config.DEEP_HIDDEN_DIMS,
-        "dropout_rate": config.DROPOUT_RATE,
-        "random_seed": config.RANDOM_SEED,
-        # 필요한 다른 설정값들도 추가 가능
-    }
-    run = wandb.init(
-        project="movie-success-predictor", # <--- 원하는 프로젝트 이름으로 변경!
-        # entity="YOUR_WANDB_USERNAME", # <--- 본인의 W&B 사용자 이름 또는 팀 이름! (선택 사항, 기본값 사용 가능)
-        config=wandb_config,
-        name=f"run_lr{config.LEARNING_RATE}_bs{config.BATCH_SIZE}_epoch{config.NUM_EPOCHS}" # 실험 이름 (선택 사항)
-    )
+    # --- W&B 초기화 (Sweep 실행 시 자동으로 config가 채워짐) ---
+    run = wandb.init(project="movie-success-predictor") # entity는 필요시 설정
+    # Sweep에서 실행될 때는 wandb.config에 YAML 파일의 parameters가 자동으로 할당됨
+    # 따라서 wandb_config 딕셔너리를 여기서 다시 만들 필요 없음
+    
     if run: # run 객체가 성공적으로 생성되었는지 확인
         print(f"W&B Run Page: {run.get_url()}") # <--- URL 직접 출력!
     else:
         print("Failed to initialize W&B run.")
     # --------------------
+
+    seed_everything(config.RANDOM_SEED) # 결과 재현을 위해 랜덤 시드 고정
+    device = config.DEVICE # 사용할 장치 (GPU 또는 CPU)
+    print(f"Using device: {device}")
+    print(f"W&B Run Config: {run.config}") # Sweep에서 받은 설정값 확인
+
 
     # --- 1. 데이터 전처리 (필요한 경우에만 실행) ---
     # 만약 전처리된 데이터 파일이 없다면, preprocess.py의 run_preprocessing 함수를 실행합니다.
@@ -188,11 +174,14 @@ def main():
 
     # --- 3. 모델, 손실함수, 옵티마이저 정의 ---
     # WideAndDeepModel 객체를 만듭니다. (config 파일의 설정값과 위에서 결정한 actual_wide_input_dim 사용)
+    # Sweep에서 받은 deep_hidden_dims_choice 파싱
+    parsed_deep_hidden_dims = parse_deep_hidden_dims(run.config.deep_hidden_dims_choice)
+
     model = WideAndDeepModel(
         wide_input_dim=actual_wide_input_dim, # 실제 Wide 입력 피처 수
         deep_input_dim=config.DEEP_INPUT_DIM,
-        deep_hidden_dims=config.DEEP_HIDDEN_DIMS,
-        dropout_rate=config.DROPOUT_RATE
+        deep_hidden_dims=parsed_deep_hidden_dims, # 파싱된 은닉층 크기 리스트
+        dropout_rate=run.config.dropout_rate # sweep에서 받은 드롭아웃 비율
     ).to(device) # 모델을 지정된 장치(GPU 또는 CPU)로 옮깁니다.
 
     # --- W&B 모델 추적 (선택 사항, 모델 구조 및 그래디언트 시각화) ---
@@ -201,6 +190,7 @@ def main():
 
     criterion = nn.BCELoss() # 손실 함수: 이진 교차 엔트로피 (성공/실패 예측 문제에 적합)
     optimizer = optim.Adam(model.parameters(), lr=run.config.learning_rate) # 옵티마이저: Adam 사용
+    scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3) # 학습률을 조정하는 스케쥴러
 
     # (선택 사항) 만약 이전에 저장된 모델 가중치가 있다면 불러와서 학습을 이어갈 수 있습니다.
     # if os.path.exists(config.MODEL_WEIGHTS_PATH):
@@ -220,7 +210,11 @@ def main():
         'val_roc_auc': []
     }
 
-    for epoch in range(run.config.num_epochs): # 정해진 에포크 수만큼 반복
+    num_epochs_to_run = config.NUM_EPOCHS # 기본 에포크 수 (YAML에서 설정 안 했다면)
+    if hasattr(run.config, 'num_epochs'): # YAML에 num_epochs가 정의되어 있다면 그 값 사용
+        num_epochs_to_run = run.config.num_epochs
+        
+    for epoch in range(num_epochs_to_run): # 정해진 에포크 수만큼 반복
         # 한 에포크 학습 실행
         train_loss = train_one_epoch(model, train_loader, criterion, optimizer, device)
         # 한 에포크 학습 후 검증 데이터로 성능 평가
@@ -235,21 +229,21 @@ def main():
         history['val_f1'].append(val_metrics['f1_score'])
         history['val_roc_auc'].append(val_metrics['roc_auc'])
         
-        # --- W&B 로그 기록 ---
-        # wandb.log()를 사용하여 원하는 지표들을 W&B 대시보드로 전송합니다.
-        # 딕셔너리 형태로 전달하며, 'epoch'을 함께 기록하면 x축으로 사용 가능합니다.
-        wandb.log({
+        # W&B 로그 기록 (val_f1을 포함하여 metric.name과 일치하는 키가 있어야 함)
+        log_data = {
             "epoch": epoch + 1,
             "train_loss": train_loss,
             "val_loss": val_loss,
             "val_accuracy": val_metrics['accuracy'],
             "val_precision": val_metrics['precision'],
             "val_recall": val_metrics['recall'],
-            "val_f1": val_metrics['f1_score'],
+            "val_f1": val_metrics['f1_score'], # YAML의 metric.name과 일치!
             "val_roc_auc": val_metrics['roc_auc'],
-            "learning_rate": optimizer.param_groups[0]['lr'] # 현재 학습률 기록
-        })
-        # --------------------
+            "learning_rate": optimizer.param_groups[0]['lr']
+        }
+        wandb.log(log_data)
+
+        scheduler.step(val_loss)
 
         # 현재 에포크의 학습 결과 출력
         print(f"Epoch [{epoch+1}/{config.NUM_EPOCHS}] | "

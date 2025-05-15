@@ -1,28 +1,29 @@
 # sweep.yaml
-program: src/train.py  # 실행할 파이썬 스크립트 (중요: -m 옵션 없이 파일 경로로)
-method: bayes          # 탐색 방법: grid, random, bayes (베이지안 최적화 추천)
+# program: src/train.py  # Python script to execute (important: file path, not with -m option)
+method: bayes          # Search strategy: grid, random, or bayes (Bayesian optimization recommended)
 metric:
-  name: val_f1         # 최적화할 목표 지표 이름 (wandb.log()에 사용한 키와 일치)
-  goal: maximize       # 목표: maximize (최대화) 또는 minimize (최소화)
+  name: val_f1         # Name of the metric to optimize (must match the key used in wandb.log())
+  goal: maximize       # Goal: maximize or minimize
 parameters:
   learning_rate:
-    distribution: log_uniform_values # 로그 스케일에서 균등하게 샘플링
+    distribution: log_uniform_values # Sample values uniformly on a log scale
     min: 1e-5
     max: 1e-2
   batch_size:
-    values: [16, 32, 64] # 시도할 배치 크기 목록
+    values: [16, 32, 64] # List of batch sizes to try
   dropout_rate:
-    distribution: uniform # 균등 분포에서 샘플링
+    distribution: uniform # Sample values uniformly from the range
     min: 0.1
     max: 0.5
-  deep_hidden_dims_choice: # 은닉층 구조는 직접적인 숫자 리스트 대신 선택지로
-    values: ["256,128", "512,256", "128,64", "256,128,64"] # 문자열로 전달 후 파싱
-  # num_epochs: # 에포크 수는 고정하거나, 여기서 조절 가능
-  #   value: 50 # 예시: 50 에포크로 고정 (조기 종료 사용 권장)
+  deep_hidden_dims_choice: # Hidden layer structure choices (as strings, parse in train.py)
+    values: ["256,128", "512,256", "128,64", "256,128,64"]
+  # num_epochs: # Number of epochs can be fixed or varied here
+  #   value: 50 # Example: Fix to 50 epochs (early stopping is recommended)
 
-# (선택 사항) Python 인터프리터 경로 지정 (가상환경 사용 시 유용)
-# command:
-#  - ${env} # 환경 변수 사용
-#  - python # 또는 venv/Scripts/python.exe (Windows) 또는 venv/bin/python (Linux/macOS)
-#  - ${program}
-#  - ${args}
+# (Optional) Specify Python interpreter path (useful for virtual environments)
+command:
+  - ${env} # Use environment variables
+  - D:\projects\movie_success_predictor\venv\Scripts\python.exe # Or path to venv python executable, e.g., venv/Scripts/python.exe (Windows) or venv/bin/python (Linux/macOS)
+  - -m
+  - src.train # Module name to run (if using -m)
+  - ${args}
