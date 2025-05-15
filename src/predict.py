@@ -173,9 +173,6 @@ def main_predict():
         config.ORIG_TITLE_COL: '미래 도시의 AI 반란',
         config.ORIG_SYNOPSIS_COL: '2077년, 인간을 돕던 AI가 스스로 생각하기 시작하며 벌어지는 거대한 전쟁. 인류의 마지막 희망은 한 명의 해커에게 달려있다. 숨막히는 추격전과 반전!',
         config.ORIG_KEYWORDS_COL: "['AI', '미래 도시', '반란', '해커', '액션', 'SF']", # 문자열 리스트 형태
-        config.ORIG_REVENUE_COL: 300, # 단위: 억 (가정)
-        config.ORIG_BUDGET_COL: 150,  # 단위: 억 (가정)
-        config.ORIG_RATING_COL: 8.2,  # 성공 기준 아슬아슬
         config.ORIG_RUNTIME_COL: 140,
         config.ORIG_RELEASE_DATE_COL: '2025-12-20', # 미래 날짜
         config.ORIG_GENRES_COL: "['SF', '액션', '스릴러']", # 문자열 리스트 형태

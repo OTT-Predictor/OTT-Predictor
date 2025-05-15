@@ -74,8 +74,7 @@ MONTH_OHE_PREFIX = 'month_'
 # 프로그램이 데이터를 처리하면서 새로 만들거나 사용할 열 이름들
 TARGET_COL = 'success' # 우리가 예측하려는 목표값 ('성공' 여부)이 담길 열 이름
 # 수치형 정보로 사용할 열 이름 목록 (개봉일에서 연, 월, 일을 뽑아내서 추가)
-NUMERICAL_FEATURES = [ORIG_REVENUE_COL, ORIG_BUDGET_COL, ORIG_RATING_COL, ORIG_RUNTIME_COL,
-                      'release_year', 'release_day']
+NUMERICAL_FEATURES = [ORIG_RUNTIME_COL, 'release_year', 'release_day']
 COMBINED_TEXT_COL = 'combined_text_for_bert' # 결합된 텍스트 컬럼명
 CLS_VECTOR_COL = 'cls_vector' # 영화 줄거리(시놉시스)를 숫자로 변환한 정보가 담길 열 이름
 
