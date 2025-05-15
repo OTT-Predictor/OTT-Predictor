@@ -217,6 +217,10 @@ def main():
 
     # --- 4. 학습 루프 실행 ---
     print("\n--- Starting Training ---")
+    # 조기 종료는 Sweep 실행 시간을 줄이는 데 매우 중요
+    best_val_loss_for_early_stop = float('inf')
+    epochs_no_improve = 0
+    patience_early_stop = 7 # 조기 종료 patience (Sweep 시에는 짧게 설정하는 것이 좋음)
     best_val_f1 = 0.0 # 가장 좋았던 검증 F1 점수를 기록할 변수 (또는 다른 지표 사용 가능)
     history = { # 학습 과정을 기록할 딕셔너리
         'train_loss': [],
@@ -262,7 +266,7 @@ def main():
         wandb.log(log_data)
 
         scheduler.step(val_loss)
-
+        
         # 현재 에포크의 학습 결과 출력
         print(f"Epoch [{epoch+1}/{config.NUM_EPOCHS}] | "
               f"Train Loss: {train_loss:.4f} | Val Loss: {val_loss:.4f} | "
@@ -278,6 +282,19 @@ def main():
             # 모델 가중치와 옵티마이저 상태를 파일로 저장 (utils.py의 함수 사용)
             save_checkpoint(model.state_dict(), optimizer.state_dict(), config.MODEL_WEIGHTS_PATH)
             print(f"Best F1 score improved to {best_val_f1:.4f}. Model checkpoint saved to {config.MODEL_WEIGHTS_PATH}")
+
+        # 조기 종료 로직
+        if val_loss < best_val_loss_for_early_stop:
+            best_val_loss_for_early_stop = val_loss
+            epochs_no_improve = 0
+            # Sweep 중에는 매번 모델을 저장할 필요는 없을 수 있음 (최종 모델은 Sweep 종료 후 선택)
+            # save_checkpoint(model.state_dict(), None, os.path.join(run.dir, "best_model.pth")) # W&B run 디렉토리에 저장
+        else:
+            epochs_no_improve +=1
+        
+        if epochs_no_improve >= patience_early_stop:
+            print(f"Early stopping triggered after {epoch+1} epochs.")
+            break
 
     print("--- Training Finished ---")
     # 학습 완료 후 history를 파일로 저장 (예: pickle)

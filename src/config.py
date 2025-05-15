@@ -48,7 +48,7 @@ DROPOUT_RATE = 0.2 # 모델 학습 시 과도한 암기를 막기 위한 장치(
 # --- 학습 하이퍼파라미터 (모델 학습 방법을 조절하는 값들) ---
 LEARNING_RATE = 1e-4 # 학습률: 모델이 정답을 향해 얼마나 큰 걸음으로 나아갈지 정하는 값 (0.0001)
 BATCH_SIZE = 16      # 배치 크기: 한 번에 학습할 데이터 묶음의 크기 (16개씩 묶어서 학습)
-NUM_EPOCHS = 30      # 에포크 수: 전체 데이터를 몇 번 반복해서 학습할지 (20번 반복)
+NUM_EPOCHS = 50      # 에포크 수: 전체 데이터를 몇 번 반복해서 학습할지 (20번 반복)
 # DEVICE: 학습을 CPU에서 할지 GPU에서 할지 결정. GPU가 있으면 GPU 사용 (훨씬 빠름)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 RANDOM_SEED = 42     # 랜덤 시드: 실험 결과를 똑같이 재현하고 싶을 때 사용하는 숫자 (아무 숫자나 상관없음)
