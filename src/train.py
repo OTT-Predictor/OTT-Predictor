@@ -91,10 +91,28 @@ def parse_deep_hidden_dims(dims_str):
 
 def main():
     """메인 학습 파이프라인을 실행하는 함수입니다."""
-    # --- W&B 초기화 (Sweep 실행 시 자동으로 config가 채워짐) ---
-    run = wandb.init(project="movie-success-predictor") # entity는 필요시 설정
-    # Sweep에서 실행될 때는 wandb.config에 YAML 파일의 parameters가 자동으로 할당됨
-    # 따라서 wandb_config 딕셔너리를 여기서 다시 만들 필요 없음
+    # --- W&B 초기화 ---
+    # 직접 실행 시 사용할 기본 하이퍼파라미터 (config.py에서 가져옴)
+    default_wandb_config = {
+        "learning_rate": config.LEARNING_RATE,
+        "batch_size": config.BATCH_SIZE,
+        "num_epochs": config.NUM_EPOCHS,
+        "bert_model_name": config.BERT_MODEL_NAME,
+        # deep_hidden_dims_choice는 문자열이어야 하므로, config.DEEP_HIDDEN_DIMS를 문자열로 변환
+        "deep_hidden_dims_choice": ",".join(map(str, config.DEEP_HIDDEN_DIMS)),
+        "dropout_rate": config.DROPOUT_RATE,
+        "random_seed": config.RANDOM_SEED,
+    }
+    run = wandb.init(project="movie-success-predictor",
+                     config=default_wandb_config) # entity는 필요시 설정
+    # Sweep 실행 시에는 wandb.init()이 호출될 때 Sweep 컨트롤러가 전달한 값으로 run.config가 덮어쓰여짐.
+
+    # 이제 run.config.parameter_name 형태로 안전하게 접근 가능
+    current_learning_rate = run.config.learning_rate
+    current_batch_size = run.config.batch_size
+    current_num_epochs = run.config.num_epochs
+    current_deep_hidden_dims_str = run.config.deep_hidden_dims_choice
+    current_dropout_rate = run.config.dropout_rate
     
     if run: # run 객체가 성공적으로 생성되었는지 확인
         print(f"W&B Run Page: {run.get_url()}") # <--- URL 직접 출력!
@@ -169,19 +187,19 @@ def main():
     print(f"Validation set size: {len(val_dataset)}")
 
     # DataLoader: Dataset에서 데이터를 배치 크기만큼 가져오고, 섞어주는(shuffle) 등의 역할을 합니다.
-    train_loader = DataLoader(train_dataset, batch_size=config.BATCH_SIZE, shuffle=True, num_workers=0)
-    val_loader = DataLoader(val_dataset, batch_size=config.BATCH_SIZE, shuffle=False, num_workers=0) # 검증 시에는 섞지 않음
+    train_loader = DataLoader(train_dataset, batch_size=current_batch_size, shuffle=True, num_workers=0)
+    val_loader = DataLoader(val_dataset, batch_size=current_batch_size, shuffle=False, num_workers=0) # 검증 시에는 섞지 않음
 
     # --- 3. 모델, 손실함수, 옵티마이저 정의 ---
     # WideAndDeepModel 객체를 만듭니다. (config 파일의 설정값과 위에서 결정한 actual_wide_input_dim 사용)
     # Sweep에서 받은 deep_hidden_dims_choice 파싱
-    parsed_deep_hidden_dims = parse_deep_hidden_dims(run.config.deep_hidden_dims_choice)
+    parsed_deep_hidden_dims = parse_deep_hidden_dims(current_deep_hidden_dims_str)
 
     model = WideAndDeepModel(
         wide_input_dim=actual_wide_input_dim, # 실제 Wide 입력 피처 수
         deep_input_dim=config.DEEP_INPUT_DIM,
         deep_hidden_dims=parsed_deep_hidden_dims, # 파싱된 은닉층 크기 리스트
-        dropout_rate=run.config.dropout_rate # sweep에서 받은 드롭아웃 비율
+        dropout_rate=current_dropout_rate # sweep에서 받은 드롭아웃 비율
     ).to(device) # 모델을 지정된 장치(GPU 또는 CPU)로 옮깁니다.
 
     # --- W&B 모델 추적 (선택 사항, 모델 구조 및 그래디언트 시각화) ---
@@ -189,7 +207,7 @@ def main():
     # -------------------------------------------------------------
 
     criterion = nn.BCELoss() # 손실 함수: 이진 교차 엔트로피 (성공/실패 예측 문제에 적합)
-    optimizer = optim.Adam(model.parameters(), lr=run.config.learning_rate) # 옵티마이저: Adam 사용
+    optimizer = optim.Adam(model.parameters(), lr=current_learning_rate) # 옵티마이저: Adam 사용
     scheduler = ReduceLROnPlateau(optimizer, mode='min', factor=0.1, patience=3) # 학습률을 조정하는 스케쥴러
 
     # (선택 사항) 만약 이전에 저장된 모델 가중치가 있다면 불러와서 학습을 이어갈 수 있습니다.
