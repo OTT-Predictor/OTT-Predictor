@@ -51,10 +51,11 @@ def load_raw_data(file_path):
 
 def create_target_label(df):
     """'성공' 여부를 나타내는 타겟 레이블(정답 값)을 만드는 함수입니다."""
-    # config 파일에 임의로 정의된 기준 (수익 > 제작비 AND 평점 > 7.0)에 따라 'success' 열을 만듭니다.
-    # 조건을 만족하면 1 (성공), 아니면 0 (실패) 값을 가집니다.
-    df[config.TARGET_COL] = ((df[config.ORIG_REVENUE_COL] > df[config.ORIG_BUDGET_COL]) & \
-                             (df[config.ORIG_RATING_COL] > 7.0)).astype(int)
+    # 임의로 정의된 기준에 따라 'success' 열을 만듭니다.
+    # 조건을 만족하면 1 (성공(), 아니면 0 (실패) 값을 가집니다.
+    df[config.TARGET_COL] = (((df[config.ORIG_REVENUE_COL] / df[config.ORIG_BUDGET_COL]) > 1.1) & \
+                             (df[config.ORIG_RATING_COL] > 6.5) & \
+                             (df[config.ORIG_RATING_COUNT_COL] > 1000)).astype(int)
     return df # 'success' 열이 추가된 DataFrame 반환
 
 def process_release_date_and_month_onehot(df, mode='train'): # 함수 이름 및 기능 변경
@@ -138,7 +139,7 @@ def preprocess_language_onehot(df, mode='train'):
 
 def preprocess_numerical_features(df, mode='train'):
     """
-    수익, 제작비, 평점 등 숫자 정보를 가진 피처(열)들을 전처리하는 함수입니다.
+    숫자 정보를 가진 피처(열)들을 전처리하는 함수입니다.
     숫자들의 크기(scale)를 비슷하게 맞춰주는 정규화(Standardization) 작업을 합니다.
     Args:
         df (pd.DataFrame): 처리할 데이터프레임.

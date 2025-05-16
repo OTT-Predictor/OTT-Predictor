@@ -13,7 +13,7 @@ PROJECT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 데이터 관련 폴더 및 파일 경로 설정
 DATA_DIR = os.path.join(PROJECT_ROOT_DIR, "data") # "프로젝트폴더/data"
-RAW_DATA_FILENAME = "movies.csv" # 원본 데이터 파일 이름 (우리가 직접 준비해야 할 파일)
+RAW_DATA_FILENAME = "updated_movie.csv" # 원본 데이터 파일 이름 (우리가 직접 준비해야 할 파일)
 RAW_DATA_PATH = os.path.join(DATA_DIR, "raw", RAW_DATA_FILENAME) # "프로젝트폴더/data/raw/movies.csv"
 PROCESSED_DATA_FILENAME = "processed_movies_with_cls.pkl" # 전처리된 데이터 파일 이름 (나중에 프로그램이 만들 파일)
 PROCESSED_DATA_PATH = os.path.join(DATA_DIR, "processed", PROCESSED_DATA_FILENAME) # "프로젝트폴더/data/processed/..."
@@ -55,16 +55,17 @@ RANDOM_SEED = 42     # 랜덤 시드: 실험 결과를 똑같이 재현하고 �
 
 # --- 피처 이름 정의 (데이터 파일 안의 열(column) 이름들) ---
 # 원본 데이터 파일에 있을 것으로 예상되는 열 이름들 (실제 파일과 일치해야 함!)
-ORIG_REVENUE_COL = 'revenue' # 영화 수익 정보가 담긴 열 이름
-ORIG_BUDGET_COL = 'budget'   # 영화 제작비 정보가 담긴 열 이름
-ORIG_RATING_COL = 'rating'   # 영화 평점 정보가 담긴 열 이름
-ORIG_RUNTIME_COL = 'runtime' # 영화 상영 시간 정보가 담긴 열 이름
-ORIG_RELEASE_DATE_COL = 'release_date' # 영화 개봉일 정보가 담긴 열 이름
-ORIG_GENRES_COL = 'genres'   # 영화 장르 정보가 담긴 열 이름 (예: "액션, 코미디")
-ORIG_SYNOPSIS_COL = 'synopsis' # 영화 줄거리 정보가 담긴 열 이름
-ORIG_TITLE_COL = 'title' # 실제 제목 컬럼명 
-ORIG_KEYWORDS_COL = 'keywords' # 실제 키워드 컬럼명 
-ORIG_LANGUAGE_COL = 'language' # 언어 컬럼 추가
+ORIG_REVENUE_COL = '수익' # 영화 수익 정보가 담긴 열 이름
+ORIG_BUDGET_COL = '제작비'   # 영화 제작비 정보가 담긴 열 이름
+ORIG_RATING_COL = '평균 평점'   # 영화 평점 정보가 담긴 열 이름
+ORIG_RATING_COUNT_COL = '평점 수' # 영화 평점 수 정보가 담긴 열 이름
+ORIG_RUNTIME_COL = '상영시간' # 영화 상영 시간 정보가 담긴 열 이름
+ORIG_RELEASE_DATE_COL = '개봉일' # 영화 개봉일 정보가 담긴 열 이름
+ORIG_GENRES_COL = '장르'   # 영화 장르 정보가 담긴 열 이름 (예: "액션, 코미디")
+ORIG_SYNOPSIS_COL = '시놉시스' # 영화 줄거리 정보가 담긴 열 이름
+ORIG_TITLE_COL = '제목' # 실제 제목 컬럼명 
+ORIG_KEYWORDS_COL = '키워드' # 실제 키워드 컬럼명 
+ORIG_LANGUAGE_COL = '원어' # 언어 컬럼 추가
 
 # 원-핫 인코딩 접두사
 GENRE_MLB_PREFIX = 'genre_' # MultiLabelBinarizer 사용 시 classes_로 바로 접근 가능하므로, 컬럼명 생성 시 사용
