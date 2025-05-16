@@ -1,12 +1,5 @@
-<<<<<<< HEAD
-/dataloader.py
-/datatest.py
-/preprocess.py
-/sample_data.py
 /venv
-/wide_and_deep.py
 /wandb
-=======
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -181,4 +174,3 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
->>>>>>> 9c1e6f2a68f409c0ed34cd7e1fa026d792bff915
