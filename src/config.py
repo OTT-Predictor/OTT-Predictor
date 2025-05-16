@@ -28,6 +28,8 @@ LANGUAGE_OHE_FILENAME = "language_onehot_encoder.joblib" # 언어용 OHE
 LANGUAGE_OHE_PATH = os.path.join(MODEL_DIR, LANGUAGE_OHE_FILENAME)
 MONTH_OHE_FILENAME = "month_onehot_encoder.joblib" # 월용 OHE
 MONTH_OHE_PATH = os.path.join(MODEL_DIR, MONTH_OHE_FILENAME)
+COMPANY_OHE_FILENAME = "company_onehot_encoder.joblib"
+COMPANY_OHE_PATH = os.path.join(MODEL_DIR, COMPANY_OHE_FILENAME)
 
 MODEL_WEIGHTS_FILENAME = "wide_deep_model_weights.pth" # 학습된 모델 가중치 저장 파일 이름
 MODEL_WEIGHTS_PATH = os.path.join(MODEL_DIR, MODEL_WEIGHTS_FILENAME) # "프로젝트폴더/models/..."
