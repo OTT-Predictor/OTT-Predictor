@@ -43,8 +43,8 @@ def load_raw_data(file_path):
                 '액션, SF', '미스터리, 스릴러', '로맨스, 드라마',
                 '드라마, 전쟁', '코미디, 애니메이션, 가족'
             ],
-            config.ORIG_LANGUAGE_COL: ['en', 'en', 'ko', 'en', 'ja'] # 언어 샘플 추가
-            
+            config.ORIG_LANGUAGE_COL: ['en', 'en', 'ko', 'en', 'ja'], # 언어 샘플 추가
+            config.ORIG_STUDIO_COL: ['Shamley Production','Bryna Broduction','Lux Film', '20th Century Fox']
         }
         return pd.DataFrame(sample_data) # 딕셔너리를 Pandas DataFrame(표) 형태로 변환하여 반환
     return pd.read_csv(file_path) # 파일이 있다면 CSV 파일을 읽어서 DataFrame으로 반환
@@ -136,6 +136,34 @@ def preprocess_language_onehot(df, mode='train'):
         df = pd.concat([df, lang_encoded_df], axis=1)
         df = df.drop(config.ORIG_LANGUAGE_COL, axis=1, errors='ignore')
     return df, lang_cols_generated
+
+def preprocess_studio_onehot(df, mode='train'):
+    #제작사 피쳐를 원-핫 인코딩 하는 함수
+    studio_ohe_path = config.STUDIO_OHE_PATH #config에서 경로 사용
+    studio_cols_generated=[]
+
+    if config.ORIG_STUDIO_COL in df.columns:
+        df[config.ORIG_STUDIO_COL] = df[config.ORIG_STUDIO_COL].fillna('unknown').astype(str)
+        studio_data_for_ohe = df[[config.ORIG_STUDIO_COL]].copy()
+
+        if mode=='train':
+            studio_ohe=OneHotEncoder(handle_unknown='ignore',sparse_output=False)
+            studio_encoded_arr=studio_ohe.fit_transform(studio_data_for_ohe)
+            os.makedirs(os.path.dirname(studio_ohe_path),exist_ok=True)
+            joblib.dump(studio_ohe,studio_ohe_path)
+            print(f"Studio OneHotEncoder saved to {studio_ohe_path}")
+        elif mode == 'predict' or mode == 'evaluate':
+            if not os.path.exists(studio_ohe_path):
+                raise FileNotFoundError(f"Studio OHE not found at {studio_ohe_path}.")
+            studio_ohe = joblib.load(studio_ohe_path)
+            studio_encoded_arr = studio_ohe.transform(studio_data_for_ohe)
+        else: raise ValueError('mode error')
+
+        studio_cols_generated = [f"{config.STUDIO_OHE_PREFIX}{cat}" for cat in studio_ohe.categories_[0]]
+        studio_encoded_df = pd.DataFrame(studio_encoded_arr, columns=studio_cols_generated,index=df.index)
+        df = pd.concat([df,studio_encoded_df],axis=1)
+        df = df.drop(config.ORIG_STUDIO_COL,axis=1,errors='ignore')
+    return df, studio_cols_generated
 
 def preprocess_numerical_features(df, mode='train'):
     """
@@ -296,6 +324,7 @@ def run_preprocessing(raw_data_path, processed_data_path, mode='train'):
 
     # 3. 피처별 전처리 (수치형, 범주형(장르))
     df, lang_onehot_cols = preprocess_language_onehot(df, mode=mode) # 언어 전처리 추가
+    df, studio_onehot_cols = preprocess_studio_onehot(df,mode = mode)
     df, month_onehot_cols = process_release_date_and_month_onehot(df, mode=mode) # 수정된 함수 호출
     df = preprocess_numerical_features(df, mode=mode)
     df, genre_cols = preprocess_genre_features(df, mode=mode) # 장르 처리 후 생성된 열 이름들도 받음
@@ -329,7 +358,7 @@ def run_preprocessing(raw_data_path, processed_data_path, mode='train'):
 
     print(f"--- Preprocessing '{mode}' mode finished ---")
     # 이제 wide 파트에 사용될 컬럼은 NUMERICAL_FEATURES + genre_cols + month_onehot_cols
-    all_wide_cols = config.NUMERICAL_FEATURES + genre_cols + month_onehot_cols + lang_onehot_cols
+    all_wide_cols = config.NUMERICAL_FEATURES + genre_cols + month_onehot_cols + lang_onehot_cols + studio_onehot_cols
     return df, all_wide_cols # wide 파트 컬럼명 리스트 반환
 
 if __name__ == '__main__':
