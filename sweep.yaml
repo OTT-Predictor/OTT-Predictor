@@ -1,0 +1,29 @@
+# sweep.yaml
+# program: src/train.py  # Python script to execute (important: file path, not with -m option)
+method: bayes          # Search strategy: grid, random, or bayes (Bayesian optimization recommended)
+metric:
+  name: val_f1         # Name of the metric to optimize (must match the key used in wandb.log())
+  goal: maximize       # Goal: maximize or minimize
+parameters:
+  learning_rate:
+    distribution: log_uniform_values # Sample values uniformly on a log scale
+    min: 1e-5
+    max: 1e-2
+  batch_size:
+    values: [16, 32, 64] # List of batch sizes to try
+  dropout_rate:
+    distribution: uniform # Sample values uniformly from the range
+    min: 0.1
+    max: 0.5
+  deep_hidden_dims_choice: # Hidden layer structure choices (as strings, parse in train.py)
+    values: ["256,128", "512,256", "128,64", "256,128,64"]
+  # num_epochs: # Number of epochs can be fixed or varied here
+  #   value: 50 # Example: Fix to 50 epochs (early stopping is recommended)
+
+# (Optional) Specify Python interpreter path (useful for virtual environments)
+command:
+  - ${env} # Use environment variables
+  - D:\projects\movie_success_predictor\venv\Scripts\python.exe # Or path to venv python executable, e.g., venv/Scripts/python.exe (Windows) or venv/bin/python (Linux/macOS)
+  - -m
+  - src.train # Module name to run (if using -m)
+  - ${args}
