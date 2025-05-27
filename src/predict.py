@@ -17,6 +17,7 @@ from model import WideAndDeepModel # 모델 클래스 (model.py)
 from transformers import BertTokenizer, BertModel
 from utils import load_checkpoint # 저장된 모델 가중치를 불러오는 함수 (utils.py)
 
+
 def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scaler, mlb, month_ohe, lang_ohe):
     """
     하나의 영화 데이터(딕셔너리 형태)에 대한 성공 예측을 수행하는 함수입니다.
@@ -96,7 +97,7 @@ def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scal
     # 2-7. CLS 벡터 추출 (결합된 텍스트 사용)
     # get_cls_vector_batch 함수는 preprocess.py 에 정의되어 있다고 가정하고 사용
     # 또는 해당 함수 로직을 여기에 직접 구현
-    from .preprocess import get_cls_vector_batch # preprocess.py에서 함수 가져오기
+    from preprocess import get_cls_vector_batch # preprocess.py에서 함수 가져오기
     cls_vector_arr = get_cls_vector_batch([combined_text], tokenizer, bert_model_for_cls, device, config.BERT_MAX_LENGTH)
 
 

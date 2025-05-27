@@ -12,7 +12,7 @@ import ast # ast 모듈 임포트 추가
 from tqdm import tqdm # 반복 작업 시 진행 상황을 막대 형태로 보여주는 라이브러리
 
 # 같은 폴더(src) 안에 있는 config.py 파일을 불러옵니다. (설정값 사용 목적)
-from . import config
+import config
 
 def load_raw_data(file_path):
     """원본 CSV 데이터를 로드하는 함수입니다."""
@@ -228,7 +228,7 @@ def preprocess_genre_features(df, mode='train'):
         os.makedirs(os.path.dirname(mlb_path), exist_ok=True)
         joblib.dump(mlb, mlb_path)
         print(f"MultiLabelBinarizer saved to {mlb_path}")
-        print(f"Encoded genre columns: {[f"{config.GENRE_MLB_PREFIX}{cls}" for cls in mlb.classes_]}")
+        print(f"Encoded genre columns: {[config.GENRE_MLB_PREFIX + str(cls) for cls in mlb.classes_]}")
     elif mode == 'predict' or mode == 'evaluate':
         if not os.path.exists(mlb_path):
             raise FileNotFoundError(f"MLB not found at {mlb_path}. Please run preprocessing in 'train' mode first.")
