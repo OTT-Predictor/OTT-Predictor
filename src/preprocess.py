@@ -137,6 +137,7 @@ def preprocess_language_onehot(df, mode='train'):
         df = df.drop(config.ORIG_LANGUAGE_COL, axis=1, errors='ignore')
     return df, lang_cols_generated
 
+""" 
 def preprocess_studio_onehot(df, mode='train'):
     #제작사 피쳐를 원-핫 인코딩 하는 함수
     studio_ohe_path = config.STUDIO_OHE_PATH #config에서 경로 사용
@@ -164,6 +165,7 @@ def preprocess_studio_onehot(df, mode='train'):
         df = pd.concat([df,studio_encoded_df],axis=1)
         df = df.drop(config.ORIG_STUDIO_COL,axis=1,errors='ignore')
     return df, studio_cols_generated
+"""
 
 def preprocess_numerical_features(df, mode='train'):
     """
@@ -324,7 +326,7 @@ def run_preprocessing(raw_data_path, processed_data_path, mode='train'):
 
     # 3. 피처별 전처리 (수치형, 범주형(장르))
     df, lang_onehot_cols = preprocess_language_onehot(df, mode=mode) # 언어 전처리 추가
-    df, studio_onehot_cols = preprocess_studio_onehot(df, mode=mode) # 제작사 전처리 추가
+    # df, studio_onehot_cols = preprocess_studio_onehot(df, mode=mode) # 제작사 전처리 추가
     df, month_onehot_cols = process_release_date_and_month_onehot(df, mode=mode) # 수정된 함수 호출
     df = preprocess_numerical_features(df, mode=mode)
     df, genre_cols = preprocess_genre_features(df, mode=mode) # 장르 처리 후 생성된 열 이름들도 받음
@@ -358,7 +360,7 @@ def run_preprocessing(raw_data_path, processed_data_path, mode='train'):
 
     print(f"--- Preprocessing '{mode}' mode finished ---")
     # 이제 wide 파트에 사용될 컬럼은 NUMERICAL_FEATURES + genre_cols + month_onehot_cols
-    all_wide_cols = config.NUMERICAL_FEATURES + genre_cols + month_onehot_cols + lang_onehot_cols + studio_onehot_cols
+    all_wide_cols = config.NUMERICAL_FEATURES + genre_cols + month_onehot_cols + lang_onehot_cols # + studio_onehot_cols
     return df, all_wide_cols # wide 파트 컬럼명 리스트 반환
 
 if __name__ == '__main__':

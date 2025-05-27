@@ -169,31 +169,31 @@ def main_predict():
 
     # --- 2. 예측할 가상의 영화 데이터 준비 ---
     # (config.py에 정의된 ORIG_..._COL 이름들을 키로 사용해야 함)
-    virtual_movie_to_predict = {
-        config.ORIG_TITLE_COL: '미래 도시의 AI 반란',
-        config.ORIG_SYNOPSIS_COL: '2077년, 인간을 돕던 AI가 스스로 생각하기 시작하며 벌어지는 거대한 전쟁. 인류의 마지막 희망은 한 명의 해커에게 달려있다. 숨막히는 추격전과 반전!',
-        config.ORIG_KEYWORDS_COL: "['AI', '미래 도시', '반란', '해커', '액션', 'SF']", # 문자열 리스트 형태
-        config.ORIG_RUNTIME_COL: 140,
-        config.ORIG_RELEASE_DATE_COL: '2025-12-20', # 미래 날짜
-        config.ORIG_GENRES_COL: "['SF', '액션', '스릴러']", # 문자열 리스트 형태
-        config.ORIG_LANGUAGE_COL: 'ko' # 한국어
-    }
+    #virtual_movie_to_predict = {
+    #    config.ORIG_TITLE_COL: 'Squid Game',
+    #    config.ORIG_SYNOPSIS_COL: 'Hundreds of cash-strapped players accept a strange invitation to compete in children\'s games for a tempting prize, but the stakes are deadly.',
+    #    config.ORIG_KEYWORDS_COL: "['survival', 'debt', 'game', 'violence', 'social satire']", # 문자열 리스트 형태
+    #    config.ORIG_RUNTIME_COL: 55,
+    #    config.ORIG_RELEASE_DATE_COL: '2021-09-20', # 미래 날짜
+    #   config.ORIG_GENRES_COL: "['드라마', '액션', '스릴러']", # 문자열 리스트 형태
+    #    config.ORIG_LANGUAGE_COL: 'ko' # 한국어
+    #}
     # 만약 release_date 대신 year, month, day를 직접 넣는다면 아래처럼
     # 'release_year': 2025,
     # 'release_month_orig': 12, # OHE 전 원래 월 값
     # 'release_day': 20,
-    #virtual_movie_to_predict = {
-    #    config.ORIG_TITLE_COL: '미키 17',
-    #    config.ORIG_SYNOPSIS_COL: '친구 티모와 함께 차린 마카롱 가게가 쫄딱 망해 거액의 빚을 지고 못 갚으면 죽이겠다는 사채업자를 피해 지구를 떠나야 하는 미키. 기술이 없는 그는, 정치인 마셜의 얼음행성 개척단에서 위험한 일을 도맡고, 죽으면 다시 프린트되는 익스펜더블로 지원한다. 4년의 항해와 얼음행성 니플하임에 도착한 뒤에도 늘 미키를 지켜준 여자친구 나샤. 그와 함께, 미키는 반복되는 죽음과 출력의 사이클에도 익숙해진다. 그러나 미키 17이 얼음행성의 생명체인 크리퍼와 만난 후 죽을 위기에서 돌아와 보니 이미 미키 18이 프린트되어 있다. 행성 당 1명만 허용된 익스펜더블이 둘이 된 멀티플 상황. 둘 중 하나는 죽어야 하는 현실 속에 걷잡을 수 없는 사건이 기다리고 있었으니…',
-    #    config.ORIG_KEYWORDS_COL: "['based on novel or book', 'dark comedy', 'space travel', 'space colony', 'alien planet', 'creature', 'space adventure', 'human cloning', 'spaceship', 'space sci-fi', 'black comedy']", # 문자열 리스트 형태
-    #    config.ORIG_REVENUE_COL: 127337252, # 단위: 억 (가정)
-    #    config.ORIG_BUDGET_COL: 118000000,  # 단위: 억 (가정)
-    #    config.ORIG_RATING_COL: 8.2,  # 성공 기준 아슬아슬
-    #    config.ORIG_RUNTIME_COL: 137,
-    #    config.ORIG_RELEASE_DATE_COL: '2026-02-28', # 미래 날짜
-    #    config.ORIG_GENRES_COL: "['SF', '코미디', '모험']", # 문자열 리스트 형태
-    #    config.ORIG_LANGUAGE_COL: 'en' # 한국어
-    #}
+    virtual_movie_to_predict = {
+        config.ORIG_TITLE_COL: '미키 17',
+        config.ORIG_SYNOPSIS_COL: '친구 티모와 함께 차린 마카롱 가게가 쫄딱 망해 거액의 빚을 지고 못 갚으면 죽이겠다는 사채업자를 피해 지구를 떠나야 하는 미키. 기술이 없는 그는, 정치인 마셜의 얼음행성 개척단에서 위험한 일을 도맡고, 죽으면 다시 프린트되는 익스펜더블로 지원한다. 4년의 항해와 얼음행성 니플하임에 도착한 뒤에도 늘 미키를 지켜준 여자친구 나샤. 그와 함께, 미키는 반복되는 죽음과 출력의 사이클에도 익숙해진다. 그러나 미키 17이 얼음행성의 생명체인 크리퍼와 만난 후 죽을 위기에서 돌아와 보니 이미 미키 18이 프린트되어 있다. 행성 당 1명만 허용된 익스펜더블이 둘이 된 멀티플 상황. 둘 중 하나는 죽어야 하는 현실 속에 걷잡을 수 없는 사건이 기다리고 있었으니…',
+        config.ORIG_KEYWORDS_COL: "['based on novel or book', 'dark comedy', 'space travel', 'space colony', 'alien planet', 'creature', 'space adventure', 'human cloning', 'spaceship', 'space sci-fi', 'black comedy']", # 문자열 리스트 형태
+        config.ORIG_REVENUE_COL: 127337252, # 단위: 억 (가정)
+        config.ORIG_BUDGET_COL: 118000000,  # 단위: 억 (가정)
+        config.ORIG_RATING_COL: 8.2,  
+        config.ORIG_RUNTIME_COL: 137,
+        config.ORIG_RELEASE_DATE_COL: '2026-02-28', # 미래 날짜
+        config.ORIG_GENRES_COL: "['SF', '코미디', '모험']", # 문자열 리스트 형태
+        config.ORIG_LANGUAGE_COL: 'en' 
+    }
     print("\n--- Predicting for Virtual Movie ---")
     print(f"Input data: {virtual_movie_to_predict}")
 
