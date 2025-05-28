@@ -6,6 +6,7 @@ import 'package:ossw4_msps/tabs/languageSelect.dart';
 import 'package:ossw4_msps/tabs/dateSelect.dart';
 import 'package:ossw4_msps/tabs/expense.dart';
 import 'package:ossw4_msps/tabs/summary.dart';
+import 'package:ossw4_msps/tabs/tag.dart';
 
 class InputTab extends StatefulWidget {
   const InputTab({super.key});
@@ -89,6 +90,12 @@ class _InputTabState extends State<InputTab> {
               onChanged: (String summary) {
                 //inputData.summary =
                 summary; // ← inputData는 모델 클래스
+              },
+            ),
+            const SizedBox(height: 48),
+            KeywordInput(
+              onChanged: (List<String> keywords) {
+                //inputData.keywords = keywords;
               },
             ),
             const SizedBox(height: 48),
