@@ -4,6 +4,8 @@ import 'package:ossw4_msps/main.dart';
 import 'package:ossw4_msps/tabs/gerne.dart';
 import 'package:ossw4_msps/tabs/languageSelect.dart';
 import 'package:ossw4_msps/tabs/dateSelect.dart';
+import 'package:ossw4_msps/tabs/expense.dart';
+import 'package:ossw4_msps/tabs/summary.dart';
 
 class InputTab extends StatefulWidget {
   const InputTab({super.key});
@@ -77,6 +79,19 @@ class _InputTabState extends State<InputTab> {
               onChanged: (year, month) {},
             ),
             SizedBox(height: 48),
+            ProductionBudgetInput(
+              onChanged: (int? budget) {
+                // 서버 전송 혹은 예측 입력값 저장
+              },
+            ),
+            SizedBox(height: 48),
+            SummaryInput(
+              onChanged: (String summary) {
+                //inputData.summary =
+                summary; // ← inputData는 모델 클래스
+              },
+            ),
+            const SizedBox(height: 48),
           ],
         ),
       ),
