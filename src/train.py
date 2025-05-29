@@ -157,8 +157,14 @@ def main():
         if os.path.exists(config.LANGUAGE_OHE_PATH):
             lang_ohe = joblib.load(config.LANGUAGE_OHE_PATH)
             lang_ohe_cols_count = len(lang_ohe.categories_[0])
+
+        prodco_cols_count = 0
+        # 제작사 MLB 로드하여 컬럼 수 계산 추가
+        if os.path.exists(config.PRODCO_MLB_PATH):
+            prodco_mlb = joblib.load(config.PRODCO_MLB_PATH)
+            prodco_cols_count = len(prodco_mlb.classes_)
         
-        actual_wide_input_dim = numerical_cols_count + genre_cols_count + month_ohe_cols_count + lang_ohe_cols_count
+        actual_wide_input_dim = numerical_cols_count + genre_cols_count + month_ohe_cols_count + lang_ohe_cols_count + prodco_cols_count
 
     print(f"Determined WIDE_INPUT_DIM for the model: {actual_wide_input_dim}")
 
@@ -220,7 +226,7 @@ def main():
     # 조기 종료는 Sweep 실행 시간을 줄이는 데 매우 중요
     best_val_loss_for_early_stop = float('inf')
     epochs_no_improve = 0
-    patience_early_stop = 7 # 조기 종료 patience (Sweep 시에는 짧게 설정하는 것이 좋음)
+    patience_early_stop = 10 # 조기 종료 patience (Sweep 시에는 짧게 설정하는 것이 좋음)
     best_val_f1 = 0.0 # 가장 좋았던 검증 F1 점수를 기록할 변수 (또는 다른 지표 사용 가능)
     history = { # 학습 과정을 기록할 딕셔너리
         'train_loss': [],
