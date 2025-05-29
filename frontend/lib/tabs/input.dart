@@ -7,6 +7,7 @@ import 'package:ossw4_msps/tabs/dateSelect.dart';
 import 'package:ossw4_msps/tabs/expense.dart';
 import 'package:ossw4_msps/tabs/summary.dart';
 import 'package:ossw4_msps/tabs/tag.dart';
+import 'package:ossw4_msps/tabs/runtime.dart';
 
 class InputTab extends StatefulWidget {
   const InputTab({super.key});
@@ -99,6 +100,11 @@ class _InputTabState extends State<InputTab> {
               },
             ),
             const SizedBox(height: 48),
+            RuntimeInput(
+              onChanged: (int? runtime) {
+                //inputData.runtime = runtime;
+              },
+            ),
           ],
         ),
       ),
