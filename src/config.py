@@ -13,7 +13,7 @@ PROJECT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 데이터 관련 폴더 및 파일 경로 설정
 DATA_DIR = os.path.join(PROJECT_ROOT_DIR, "data") # "프로젝트폴더/data"
-RAW_DATA_FILENAME = "tmdb_movies_1900_2025_preprocessed.csv" # 원본 데이터 파일 이름 (우리가 직접 준비해야 할 파일)
+RAW_DATA_FILENAME = "2_remaining_company.csv" # 원본 데이터 파일 이름 (우리가 직접 준비해야 할 파일)
 RAW_DATA_PATH = os.path.join(DATA_DIR, "raw", RAW_DATA_FILENAME) # "프로젝트폴더/data/raw/movies.csv"
 PROCESSED_DATA_FILENAME = "processed_movies_with_cls.pkl" # 전처리된 데이터 파일 이름 (나중에 프로그램이 만들 파일)
 PROCESSED_DATA_PATH = os.path.join(DATA_DIR, "processed", PROCESSED_DATA_FILENAME) # "프로젝트폴더/data/processed/..."
@@ -28,8 +28,8 @@ LANGUAGE_OHE_FILENAME = "language_onehot_encoder.joblib" # 언어용 OHE
 LANGUAGE_OHE_PATH = os.path.join(MODEL_DIR, LANGUAGE_OHE_FILENAME)
 MONTH_OHE_FILENAME = "month_onehot_encoder.joblib" # 월용 OHE
 MONTH_OHE_PATH = os.path.join(MODEL_DIR, MONTH_OHE_FILENAME)
-STUDIO_OHE_FILENAME = "studio_onehot_encoder.joblib"
-STUDIO_OHE_PATH = os.path.join(MODEL_DIR, STUDIO_OHE_FILENAME)
+PRODCO_MLB_FILENAME = "studio_onehot_encoder.joblib"
+PRODCO_MLB_PATH = os.path.join(MODEL_DIR, PRODCO_MLB_FILENAME)
 
 MODEL_WEIGHTS_FILENAME = "wide_deep_model_weights.pth" # 학습된 모델 가중치 저장 파일 이름
 MODEL_WEIGHTS_PATH = os.path.join(MODEL_DIR, MODEL_WEIGHTS_FILENAME) # "프로젝트폴더/models/..."
@@ -68,13 +68,14 @@ ORIG_SYNOPSIS_COL = '시놉시스' # 영화 줄거리 정보가 담긴 열 이�
 ORIG_TITLE_COL = '제목' # 실제 제목 컬럼명 
 ORIG_KEYWORDS_COL = '키워드' # 실제 키워드 컬럼명 
 ORIG_LANGUAGE_COL = '원어' # 언어 컬럼 추가
-ORIG_STUDIO_COL = '제작사' # 제작사 컬럼 추가
+ORIG_PRODUCTION_COMPANY_COL = '제작사' # 제작사 컬럼 추가
 
 # 원-핫 인코딩 접두사
 GENRE_MLB_PREFIX = 'genre_' # MultiLabelBinarizer 사용 시 classes_로 바로 접근 가능하므로, 컬럼명 생성 시 사용
 LANGUAGE_OHE_PREFIX = 'lang_'
 MONTH_OHE_PREFIX = 'month_'
-STUDIO_OHE_PREFIX = 'studio_' # 제작사 원-핫 인코딩 접두사
+PRODUCTION_COMPANY_MLB_PREFIX = 'prodco_' # 제작사 멀티티-핫 인코딩 접두사
+TOP_N_PRODUCTION_COMPANIES = 100 # 상위 N개 제작사 선정 기준
 
 # 프로그램이 데이터를 처리하면서 새로 만들거나 사용할 열 이름들
 TARGET_COL = 'success' # 우리가 예측하려는 목표값 ('성공' 여부)이 담길 열 이름
