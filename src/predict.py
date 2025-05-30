@@ -17,7 +17,7 @@ from .model import WideAndDeepModel # 모델 클래스 (model.py)
 from transformers import BertTokenizer, BertModel
 from .utils import load_checkpoint # 저장된 모델 가중치를 불러오는 함수 (utils.py)
 
-def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scaler, mlb, month_ohe, lang_ohe):
+def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scaler, mlb, month_ohe, lang_ohe, prodco_mlb):
     """
     하나의 영화 데이터(딕셔너리 형태)에 대한 성공 예측을 수행하는 함수입니다.
     Args:
@@ -82,7 +82,28 @@ def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scal
     lang_cols = [f"{config.LANGUAGE_OHE_PREFIX}{cat}" for cat in lang_ohe.categories_[0]]
     df_lang_encoded = pd.DataFrame(lang_encoded_arr, columns=lang_cols, index=df_input.index)
 
-    # 2-6. 텍스트 필드 결합 (title, synopsis, keywords)
+        # --- 2-6. 제작사 피처 멀티-핫 인코딩 (학습 때 사용한 prodco_mlb로 transform) ---
+    if config.ORIG_PRODUCTION_COMPANY_COL in df_input.columns:
+        prodco_str = df_input[config.ORIG_PRODUCTION_COMPANY_COL].fillna('[]').iloc[0]
+        try: prodco_list = ast.literal_eval(prodco_str)
+        except: prodco_list = []
+        prodco_list_cleaned = [[str(c).strip() for c in prodco_list if str(c).strip()]] # 이중 리스트 형태
+        
+        # prodco_mlb 객체 사용
+        prodco_encoded_arr = prodco_mlb.transform(prodco_list_cleaned)
+        prodco_cols = [f"{config.PRODUCTION_COMPANY_MLB_PREFIX}{cls}" for cls in prodco_mlb.classes_]
+        df_prodco_encoded = pd.DataFrame(prodco_encoded_arr, columns=prodco_cols, index=df_input.index)
+    else: # 제작사 컬럼이 입력에 없다면, 모든 제작사 OHE 컬럼을 0으로 채움
+        if os.path.exists(config.PRODCO_MLB_PATH):
+             prodco_mlb_loaded = joblib.load(config.PRODCO_MLB_PATH) # 컬럼명만 알기 위해 로드
+             prodco_cols = [f"{config.PRODUCTION_COMPANY_MLB_PREFIX}{cls}" for cls in prodco_mlb_loaded.classes_]
+             df_prodco_encoded = pd.DataFrame(0, index=df_input.index, columns=prodco_cols)
+        else:
+             prodco_cols = [] # MLB 파일도 없다면 제작사 컬럼 없음
+             df_prodco_encoded = pd.DataFrame(index=df_input.index) # 빈 DataFrame
+        print("Warning: Production company column not found in input data. Using zero vector for prodco features.")
+
+    # 2-7. 텍스트 필드 결합 (title, synopsis, keywords)
     title_text = str(df_input[config.ORIG_TITLE_COL].fillna('').iloc[0])
     synopsis_text = str(df_input[config.ORIG_SYNOPSIS_COL].fillna('').iloc[0])
     keywords_input_str = str(df_input[config.ORIG_KEYWORDS_COL].fillna('[]').iloc[0])
@@ -103,7 +124,7 @@ def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scal
     # --- 3. 모델 입력 형태로 변환 ---
     # Wide 파트 입력: 정규화된 수치형 + 인코딩된 장르 + 인코딩된 월 + 인코딩된 언어
     # 순서가 매우 중요! Dataset 만들 때와 동일한 순서여야 함.
-    df_wide_features = pd.concat([df_scaled_numerical, df_genre_encoded, df_month_encoded, df_lang_encoded], axis=1)
+    df_wide_features = pd.concat([df_scaled_numerical, df_genre_encoded, df_month_encoded, df_lang_encoded, df_prodco_encoded], axis=1)
     wide_input_features = df_wide_features.values.astype(np.float32) # NumPy 배열로
 
     # PyTorch 텐서로 변환하고 지정된 장치(GPU/CPU)로 옮깁니다.
@@ -134,6 +155,7 @@ def main_predict():
         mlb = joblib.load(config.MLB_PATH)
         month_ohe = joblib.load(config.MONTH_OHE_PATH)
         lang_ohe = joblib.load(config.LANGUAGE_OHE_PATH)
+        prodco_mlb = joblib.load(config.PRODCO_MLB_PATH) # 제작사 MLB 로드
     except FileNotFoundError as e:
         print(f"Error: Preprocessor file not found. {e}")
         print("Please run training first to generate these preprocessor files.")
@@ -147,7 +169,8 @@ def main_predict():
     actual_wide_input_dim = len(config.NUMERICAL_FEATURES) + \
                             len(mlb.classes_) + \
                             len(month_ohe.categories_[0]) + \
-                            len(lang_ohe.categories_[0])
+                            len(lang_ohe.categories_[0]) + \
+                            len(prodco_mlb.classes_) # 제작사 컬럼 수 추가)
     print(f"Determined WIDE_INPUT_DIM for the model: {actual_wide_input_dim}")
 
     # 우리 모델(WideAndDeepModel) 객체 생성
@@ -169,31 +192,32 @@ def main_predict():
 
     # --- 2. 예측할 가상의 영화 데이터 준비 ---
     # (config.py에 정의된 ORIG_..._COL 이름들을 키로 사용해야 함)
-    #virtual_movie_to_predict = {
-    #    config.ORIG_TITLE_COL: 'Squid Game',
-    #    config.ORIG_SYNOPSIS_COL: 'Hundreds of cash-strapped players accept a strange invitation to compete in children\'s games for a tempting prize, but the stakes are deadly.',
-    #    config.ORIG_KEYWORDS_COL: "['survival', 'debt', 'game', 'violence', 'social satire']", # 문자열 리스트 형태
-    #    config.ORIG_RUNTIME_COL: 55,
-    #    config.ORIG_RELEASE_DATE_COL: '2021-09-20', # 미래 날짜
-    #   config.ORIG_GENRES_COL: "['드라마', '액션', '스릴러']", # 문자열 리스트 형태
-    #    config.ORIG_LANGUAGE_COL: 'ko' # 한국어
-    #}
+    virtual_movie_to_predict = {
+        config.ORIG_TITLE_COL: '타이타닉',
+        config.ORIG_SYNOPSIS_COL: '1912년 4월 귀족 가문의 딸인 로즈는 타이타닉호에 승선한다. 사랑하지도 않는 남자와 결혼해야 한다는 사실에 절망한 로즈는 자살을 시도하지만, 마침 가난한 화가인 잭이 구해주게 되고 둘은 서로 사랑에 빠진다. 미래를 함께 약속하며 행복한 시간을 보내는 것도 잠시, 로즈와 잭은 예상치 못한 난관과 마주하게 된다.',
+        config.ORIG_KEYWORDS_COL: "['shipwerck', 'romance', 'tragedy', 'iceberg', 'ocean']", # 문자열 리스트 형태
+        config.ORIG_RUNTIME_COL: 115,
+        config.ORIG_RELEASE_DATE_COL: '1980-08-01', # 미래 날짜
+        config.ORIG_GENRES_COL: "['모험']", # 문자열 리스트 형태
+        config.ORIG_LANGUAGE_COL: 'en', # 한국어
+        config.ORIG_PRODUCTION_COMPANY_COL: '20th Century Fox' # 제작사
+    }
     # 만약 release_date 대신 year, month, day를 직접 넣는다면 아래처럼
     # 'release_year': 2025,
     # 'release_month_orig': 12, # OHE 전 원래 월 값
     # 'release_day': 20,
-    virtual_movie_to_predict = {
-        config.ORIG_TITLE_COL: '미키 17',
-        config.ORIG_SYNOPSIS_COL: '친구 티모와 함께 차린 마카롱 가게가 쫄딱 망해 거액의 빚을 지고 못 갚으면 죽이겠다는 사채업자를 피해 지구를 떠나야 하는 미키. 기술이 없는 그는, 정치인 마셜의 얼음행성 개척단에서 위험한 일을 도맡고, 죽으면 다시 프린트되는 익스펜더블로 지원한다. 4년의 항해와 얼음행성 니플하임에 도착한 뒤에도 늘 미키를 지켜준 여자친구 나샤. 그와 함께, 미키는 반복되는 죽음과 출력의 사이클에도 익숙해진다. 그러나 미키 17이 얼음행성의 생명체인 크리퍼와 만난 후 죽을 위기에서 돌아와 보니 이미 미키 18이 프린트되어 있다. 행성 당 1명만 허용된 익스펜더블이 둘이 된 멀티플 상황. 둘 중 하나는 죽어야 하는 현실 속에 걷잡을 수 없는 사건이 기다리고 있었으니…',
-        config.ORIG_KEYWORDS_COL: "['based on novel or book', 'dark comedy', 'space travel', 'space colony', 'alien planet', 'creature', 'space adventure', 'human cloning', 'spaceship', 'space sci-fi', 'black comedy']", # 문자열 리스트 형태
-        config.ORIG_REVENUE_COL: 127337252, # 단위: 억 (가정)
-        config.ORIG_BUDGET_COL: 118000000,  # 단위: 억 (가정)
-        config.ORIG_RATING_COL: 8.2,  
-        config.ORIG_RUNTIME_COL: 137,
-        config.ORIG_RELEASE_DATE_COL: '2026-02-28', # 미래 날짜
-        config.ORIG_GENRES_COL: "['SF', '코미디', '모험']", # 문자열 리스트 형태
-        config.ORIG_LANGUAGE_COL: 'en' 
-    }
+    #virtual_movie_to_predict = {
+    #    config.ORIG_TITLE_COL: '미키 17',
+    #    config.ORIG_SYNOPSIS_COL: '친구 티모와 함께 차린 마카롱 가게가 쫄딱 망해 거액의 빚을 지고 못 갚으면 죽이겠다는 사채업자를 피해 지구를 떠나야 하는 미키. 기술이 없는 그는, 정치인 마셜의 얼음행성 개척단에서 위험한 일을 도맡고, 죽으면 다시 프린트되는 익스펜더블로 지원한다. 4년의 항해와 얼음행성 니플하임에 도착한 뒤에도 늘 미키를 지켜준 여자친구 나샤. 그와 함께, 미키는 반복되는 죽음과 출력의 사이클에도 익숙해진다. 그러나 미키 17이 얼음행성의 생명체인 크리퍼와 만난 후 죽을 위기에서 돌아와 보니 이미 미키 18이 프린트되어 있다. 행성 당 1명만 허용된 익스펜더블이 둘이 된 멀티플 상황. 둘 중 하나는 죽어야 하는 현실 속에 걷잡을 수 없는 사건이 기다리고 있었으니…',
+    #    config.ORIG_KEYWORDS_COL: "['based on novel or book', 'dark comedy', 'space travel', 'space colony', 'alien planet', 'creature', 'space adventure', 'human cloning', 'spaceship', 'space sci-fi', 'black comedy']", # 문자열 리스트 형태
+    #    config.ORIG_REVENUE_COL: 127337252, # 단위: 억 (가정)
+    #    config.ORIG_BUDGET_COL: 118000000,  # 단위: 억 (가정)
+    #    config.ORIG_RATING_COL: 8.2,  
+    #    config.ORIG_RUNTIME_COL: 137,
+    #    config.ORIG_RELEASE_DATE_COL: '2026-02-28', # 미래 날짜
+    #    config.ORIG_GENRES_COL: "['SF', '코미디', '모험']", # 문자열 리스트 형태
+    #    config.ORIG_LANGUAGE_COL: 'en' 
+    #}
     print("\n--- Predicting for Virtual Movie ---")
     print(f"Input data: {virtual_movie_to_predict}")
 
@@ -201,7 +225,7 @@ def main_predict():
     predicted_probability = predict_single(
         virtual_movie_to_predict, model_instance, device,
         tokenizer, bert_model_for_cls,
-        scaler, mlb, month_ohe, lang_ohe
+        scaler, mlb, month_ohe, lang_ohe, prodco_mlb
     )
 
     # --- 4. 결과 출력 ---
