@@ -13,7 +13,7 @@ PROJECT_ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 데이터 관련 폴더 및 파일 경로 설정
 DATA_DIR = os.path.join(PROJECT_ROOT_DIR, "data") # "프로젝트폴더/data"
-RAW_DATA_FILENAME = "2_remaining_company.csv" # 원본 데이터 파일 이름 (우리가 직접 준비해야 할 파일)
+RAW_DATA_FILENAME = "3_both.csv" # 원본 데이터 파일 이름 (우리가 직접 준비해야 할 파일)
 RAW_DATA_PATH = os.path.join(DATA_DIR, "raw", RAW_DATA_FILENAME) # "프로젝트폴더/data/raw/movies.csv"
 PROCESSED_DATA_FILENAME = "processed_movies_with_cls.pkl" # 전처리된 데이터 파일 이름 (나중에 프로그램이 만들 파일)
 PROCESSED_DATA_PATH = os.path.join(DATA_DIR, "processed", PROCESSED_DATA_FILENAME) # "프로젝트폴더/data/processed/..."
@@ -45,12 +45,12 @@ WIDE_INPUT_DIM = None
 DEEP_INPUT_DIM = 768  # Deep 모델 부분에 들어갈 정보의 개수 (BERT 모델 특성에 따라 정해짐)
 DEEP_HIDDEN_DIMS = [256, 128, 64] # Deep 모델 내부의 중간 계산층(은닉층) 크기 설정
                               # [256, 128]은 첫 번째 중간층은 256개, 두 번째는 128개로 한다는 의미
-DROPOUT_RATE = 0.13705 # 모델 학습 시 과도한 암기를 막기 위한 장치(드롭아웃)의 비율
+DROPOUT_RATE = 0.35846 # 모델 학습 시 과도한 암기를 막기 위한 장치(드롭아웃)의 비율
 
 # --- 학습 하이퍼파라미터 (모델 학습 방법을 조절하는 값들) ---
-LEARNING_RATE = 0.0004517 # 학습률: 모델이 정답을 향해 얼마나 큰 걸음으로 나아갈지 정하는 값 (0.0001)
-BATCH_SIZE = 32      # 배치 크기: 한 번에 학습할 데이터 묶음의 크기 (16개씩 묶어서 학습)
-NUM_EPOCHS = 14      # 에포크 수: 전체 데이터를 몇 번 반복해서 학습할지 (20번 반복)
+LEARNING_RATE = 0.0000310 # 학습률: 모델이 정답을 향해 얼마나 큰 걸음으로 나아갈지 정하는 값 (0.0001)
+BATCH_SIZE = 16      # 배치 크기: 한 번에 학습할 데이터 묶음의 크기 (16개씩 묶어서 학습)
+NUM_EPOCHS = 100      # 에포크 수: 전체 데이터를 몇 번 반복해서 학습할지 (20번 반복)
 # DEVICE: 학습을 CPU에서 할지 GPU에서 할지 결정. GPU가 있으면 GPU 사용 (훨씬 빠름)
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 RANDOM_SEED = 42     # 랜덤 시드: 실험 결과를 똑같이 재현하고 싶을 때 사용하는 숫자 (아무 숫자나 상관없음)

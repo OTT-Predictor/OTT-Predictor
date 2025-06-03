@@ -226,7 +226,7 @@ def main():
     # 조기 종료는 Sweep 실행 시간을 줄이는 데 매우 중요
     best_val_loss_for_early_stop = float('inf')
     epochs_no_improve = 0
-    patience_early_stop = 10 # 조기 종료 patience (Sweep 시에는 짧게 설정하는 것이 좋음)
+    patience_early_stop = 15 # 조기 종료 patience (Sweep 시에는 짧게 설정하는 것이 좋음)
     best_val_f1 = 0.0 # 가장 좋았던 검증 F1 점수를 기록할 변수 (또는 다른 지표 사용 가능)
     history = { # 학습 과정을 기록할 딕셔너리
         'train_loss': [],
