@@ -25,11 +25,12 @@ scaler = joblib.load("../models/standard_scaler.joblib")
 mlb = joblib.load("../models/mlb.joblib")
 month_ohe = joblib.load("../models/month_onehot_encoder.joblib")
 lang_ohe = joblib.load("../models/language_onehot_encoder.joblib")
+prodco_mlb = joblib.load("../models/prodco_mlb_encoder.joblib") # 제작사 MLB 로드
 
 tokenizer = BertTokenizer.from_pretrained(config.BERT_MODEL_NAME)
 bert_model = BertModel.from_pretrained(config.BERT_MODEL_NAME).to(device).eval()
 
-wide_input_dim = len(config.NUMERICAL_FEATURES) + len(mlb.classes_) + len(month_ohe.categories_[0]) + len(lang_ohe.categories_[0])
+wide_input_dim = len(config.NUMERICAL_FEATURES) + len(mlb.classes_) + len(month_ohe.categories_[0]) + len(lang_ohe.categories_[0]) + len(prodco_mlb.classes)
 deep_input_dim = config.DEEP_INPUT_DIM
 
 model = WideAndDeepModel(
@@ -42,32 +43,34 @@ model = WideAndDeepModel(
 
 # 모델 가중치 불러오기
 from utils import load_checkpoint
+from typing import List
 model, _ = load_checkpoint(config.MODEL_WEIGHTS_PATH, model, optimizer=None, device=device)
 
 class MovieInput(BaseModel):
     title: str
-    keywords: list
-    genre: list
+    synopsis: str
+    keywords: List[str]
     runtime: float
-    budget: float
     release_year: int
     release_month: int
+    release_day: int
     language: str
-    company: str
-    synopsis: str
+    company: List[str]
+    genre: List[str]
+
 
 @app.post("/predict")
 def predict(data: MovieInput):
-    input_dict = data.dict()
-
-    
-    input_dict[config.ORIG_RUNTIME_COL] = input_dict.pop("runtime")
-    input_dict[config.ORIG_GENRES_COL] = input_dict.pop("genre")
-    input_dict[config.ORIG_LANGUAGE_COL] = input_dict.pop("language")
-    input_dict[config.ORIG_TITLE_COL] = input_dict.pop("title")
-    input_dict[config.ORIG_SYNOPSIS_COL] = input_dict.pop("synopsis")  # "시놉시스"
-    input_dict[config.ORIG_KEYWORDS_COL] = input_dict.pop("keywords")  # "키워드"
-
+    input_dict = {
+        config.ORIG_TITLE_COL: data.title,
+        config.ORIG_SYNOPSIS_COL: data.synopsis,
+        config.ORIG_KEYWORDS_COL: str(data.keywords),
+        config.ORIG_RUNTIME_COL: data.runtime,
+        config.ORIG_GENRES_COL: str(data.genre),
+        config.ORIG_LANGUAGE_COL: data.language,
+        config.ORIG_PRODUCTION_COMPANY_COL: str(data.company),
+        config.ORIG_RELEASE_DATE_COL: f"{data.release_year:04d}-{data.release_month:02d}-{data.release_day:02d}"
+    }
 
     #요청이 오는 순간 감시
     print("요청 도착:", input_dict)
@@ -75,7 +78,7 @@ def predict(data: MovieInput):
     prob = predict_single(
         input_dict, model, device,
         tokenizer, bert_model,
-        scaler, mlb, month_ohe, lang_ohe
+        scaler, mlb, month_ohe, lang_ohe, prodco_mlb
     )
 
     
