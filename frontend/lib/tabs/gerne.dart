@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:ossw4_msps/main.dart';
 
 class GenreSelector extends StatefulWidget {
-  const GenreSelector({super.key});
+  final Function(List<String>) onChanged;
+  const GenreSelector({
+    super.key,
+    required this.onChanged,
+  });
 
   @override
   State<GenreSelector> createState() =>
@@ -42,12 +46,14 @@ class _GenreSelectorState
       } else {
         selectedGenres.add(genre);
       }
+      widget.onChanged(selectedGenres.toList());
     });
   }
 
   void clearGenres() {
     setState(() {
       selectedGenres.clear();
+      widget.onChanged([]);
     });
   }
 
