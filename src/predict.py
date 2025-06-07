@@ -7,15 +7,16 @@ import os
 import ast # 문자열 형태의 리스트를 실제 리스트로 변환하기 위해 사용
 
 # 우리 프로젝트의 다른 파일들을 불러옵니다.
-from . import config # 설정값 (config.py)
-from .model import WideAndDeepModel # 모델 클래스 (model.py)
+import config # 설정값 (config.py)
+from model import WideAndDeepModel # 모델 클래스 (model.py)
 # preprocess.py에서 개별 전처리 함수들을 직접 가져와 사용할 수도 있지만,
 # 여기서는 예측용 데이터를 간단히 만들기 위해 일부 로직을 포함하거나,
 # 또는 preprocess.py에 예측용 단일 데이터 처리 함수를 만들고 호출할 수 있습니다.
 # 이번 예시에서는 주요 전처리 단계를 predict.py 내에 간략히 구현합니다.
 # BERT 관련 도구 (토크나이저, 모델 - CLS 벡터 추출용)
 from transformers import BertTokenizer, BertModel
-from .utils import load_checkpoint # 저장된 모델 가중치를 불러오는 함수 (utils.py)
+from utils import load_checkpoint # 저장된 모델 가중치를 불러오는 함수 (utils.py)
+
 
 def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scaler, mlb, month_ohe, lang_ohe):
     """
@@ -96,7 +97,7 @@ def predict_single(data_dict, model, device, tokenizer, bert_model_for_cls, scal
     # 2-7. CLS 벡터 추출 (결합된 텍스트 사용)
     # get_cls_vector_batch 함수는 preprocess.py 에 정의되어 있다고 가정하고 사용
     # 또는 해당 함수 로직을 여기에 직접 구현
-    from .preprocess import get_cls_vector_batch # preprocess.py에서 함수 가져오기
+    from preprocess import get_cls_vector_batch # preprocess.py에서 함수 가져오기
     cls_vector_arr = get_cls_vector_batch([combined_text], tokenizer, bert_model_for_cls, device, config.BERT_MAX_LENGTH)
 
 
