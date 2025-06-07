@@ -61,9 +61,21 @@ class MovieSuccessDataset(Dataset):
             if not lang_ohe_cols: print(f"Warning: Language OHE file not found and no language columns found for mode '{self.mode}'.")
         else:
             raise FileNotFoundError(f"Language OHE file not found at {config.LANGUAGE_OHE_PATH}. Required for training mode.")
+        
+        prodco_cols = []
+        # --- 제작사 피처 컬럼명 로드 ---
+        prodco_mlb_path = config.PRODCO_MLB_PATH # config에서 경로 가져오기
+        if os.path.exists(prodco_mlb_path):
+            prodco_mlb = joblib.load(prodco_mlb_path)
+            prodco_cols = [f"{config.PRODUCTION_COMPANY_MLB_PREFIX}{cls}" for cls in prodco_mlb.classes_]
+        elif self.mode != 'train':
+             prodco_cols = [col for col in self.dataframe.columns if col.startswith(config.PRODUCTION_COMPANY_MLB_PREFIX)]
+             if not prodco_cols: print(f"Warning: Production Company MLB file not found and no prodco columns found for mode '{self.mode}'.")
+        else:
+             raise FileNotFoundError(f"Production Company MLB file not found at {prodco_mlb_path}. Required for training mode.")
 
         # 모든 Wide 파트 피처 컬럼들을 합칩니다.
-        self.wide_feature_cols = numerical_cols + genre_cols + month_ohe_cols + lang_ohe_cols
+        self.wide_feature_cols = numerical_cols + genre_cols + month_ohe_cols + lang_ohe_cols + prodco_cols
         # print(f"Dataset - Determined wide_feature_cols: {self.wide_feature_cols}") # 디버깅용
 
         # --- 모델 입력용 데이터 미리 추출 및 타입 변환 (효율성 증대) ---

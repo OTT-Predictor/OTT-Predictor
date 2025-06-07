@@ -10,6 +10,7 @@ import joblib        # 파이썬 객체(여기서는 전처리 도구)를 파일
 import os            # 운영체제 기능 사용 (파일/폴더 경로 다루기)
 import ast # ast 모듈 임포트 추가
 from tqdm import tqdm # 반복 작업 시 진행 상황을 막대 형태로 보여주는 라이브러리
+from collections import Counter # 빈도 계산을 위해 추가
 
 # 같은 폴더(src) 안에 있는 config.py 파일을 불러옵니다. (설정값 사용 목적)
 import config
@@ -44,7 +45,7 @@ def load_raw_data(file_path):
                 '드라마, 전쟁', '코미디, 애니메이션, 가족'
             ],
             config.ORIG_LANGUAGE_COL: ['en', 'en', 'ko', 'en', 'ja'], # 언어 샘플 추가
-            config.ORIG_STUDIO_COL: ['Shamley Production','Bryna Broduction','Lux Film', '20th Century Fox']
+            config.ORIG_PRODUCTION_COMPANY_COL: ['Shamley Production','Bryna Broduction','Lux Film', '20th Century Fox']
         }
         return pd.DataFrame(sample_data) # 딕셔너리를 Pandas DataFrame(표) 형태로 변환하여 반환
     return pd.read_csv(file_path) # 파일이 있다면 CSV 파일을 읽어서 DataFrame으로 반환
@@ -53,7 +54,7 @@ def create_target_label(df):
     """'성공' 여부를 나타내는 타겟 레이블(정답 값)을 만드는 함수입니다."""
     # 임의로 정의된 기준에 따라 'success' 열을 만듭니다.
     # 조건을 만족하면 1 (성공(), 아니면 0 (실패) 값을 가집니다.
-    df[config.TARGET_COL] = (((df[config.ORIG_REVENUE_COL] / df[config.ORIG_BUDGET_COL]) > 1.1) & \
+    df[config.TARGET_COL] = (((df[config.ORIG_REVENUE_COL] / df[config.ORIG_BUDGET_COL]) > 1.5) & \
                              (df[config.ORIG_RATING_COL] > 6.5) & \
                              (df[config.ORIG_RATING_COUNT_COL] > 1000)).astype(int)
     return df # 'success' 열이 추가된 DataFrame 반환
@@ -137,33 +138,76 @@ def preprocess_language_onehot(df, mode='train'):
         df = df.drop(config.ORIG_LANGUAGE_COL, axis=1, errors='ignore')
     return df, lang_cols_generated
 
-def preprocess_studio_onehot(df, mode='train'):
-    #제작사 피쳐를 원-핫 인코딩 하는 함수
-    studio_ohe_path = config.STUDIO_OHE_PATH #config에서 경로 사용
-    studio_cols_generated=[]
+# parse_genre_string 함수와 유사하게 제작사 문자열을 파싱하는 함수
+def parse_company_string(company_str):
+    try:
+        # 문자열 형태의 리스트 "['a', 'b']" 를 실제 파이썬 리스트 ['a', 'b']로 변환
+        company_list = ast.literal_eval(company_str)
+        # 각 제작사 이름의 앞뒤 공백 제거 및 빈 문자열 제거
+        return [str(company).strip() for company in company_list if str(company).strip()]
+    except (ValueError, SyntaxError):
+        # 변환 실패 시 빈 리스트 반환
+        return []
+    
+def preprocess_production_company_features(df, mode='train'):
+    """
+    제작사(production_company) 정보를 상위 N개 기준으로 멀티-핫 인코딩하는 함수입니다.
+    """
+    prodco_mlb_path = config.PRODCO_MLB_PATH # 제작사 멀티-핫 인코딩 저장 경로
+    prodco_cols_generated = []
 
-    if config.ORIG_STUDIO_COL in df.columns:
-        df[config.ORIG_STUDIO_COL] = df[config.ORIG_STUDIO_COL].fillna('unknown').astype(str)
-        studio_data_for_ohe = df[[config.ORIG_STUDIO_COL]].copy()
+    if config.ORIG_PRODUCTION_COMPANY_COL in df.columns:
+        # 결측치 처리 (빈 리스트를 나타내는 문자열 '[]'로)
+        df[config.ORIG_PRODUCTION_COMPANY_COL] = df[config.ORIG_PRODUCTION_COMPANY_COL].fillna('[]')
 
-        if mode=='train':
-            studio_ohe=OneHotEncoder(handle_unknown='ignore',sparse_output=False)
-            studio_encoded_arr=studio_ohe.fit_transform(studio_data_for_ohe)
-            os.makedirs(os.path.dirname(studio_ohe_path),exist_ok=True)
-            joblib.dump(studio_ohe,studio_ohe_path)
-            print(f"Studio OneHotEncoder saved to {studio_ohe_path}")
+        # 제작사 문자열을 리스트로 파싱
+        df['prodco_list'] = df[config.ORIG_PRODUCTION_COMPANY_COL].apply(parse_company_string)
+
+        if mode == 'train':
+            # 1. 모든 제작사 목록 수집 및 빈도 계산
+            all_companies = [company for company_list in df['prodco_list'] for company in company_list]
+            company_counts = Counter(all_companies)
+
+            # 2. 상위 N개 제작사 선정
+            # most_common(N)은 빈도가 높은 순서대로 N개의 (항목, 빈도) 튜플 리스트를 반환
+            top_companies = [company for company, count in company_counts.most_common(config.TOP_N_PRODUCTION_COMPANIES)]
+            print(f"Selected top {config.TOP_N_PRODUCTION_COMPANIES} production companies: {top_companies}")
+
+            # 3. MultiLabelBinarizer 초기화 (상위 N개 제작사 목록을 클래스로 지정)
+            # classes 인자에 사용할 클래스 목록을 직접 전달합니다.
+            prodco_mlb = MultiLabelBinarizer(classes=top_companies)
+
+            # 4. 멀티-핫 인코딩 적용
+            # transform만 사용합니다. fit은 classes 인자로 이미 수행된 것과 같습니다.
+            prodco_encoded = pd.DataFrame(prodco_mlb.fit_transform(df['prodco_list']),
+                                          columns=[f"{config.PRODUCTION_COMPANY_MLB_PREFIX}{cls}" for cls in prodco_mlb.classes_],
+                                          index=df.index)
+
+            # 학습된 mlb를 파일로 저장합니다. (어떤 제작사들을 사용했는지 기억)
+            os.makedirs(os.path.dirname(prodco_mlb_path), exist_ok=True)
+            joblib.dump(prodco_mlb, prodco_mlb_path)
+            print(f"Production Company MLB saved to {prodco_mlb_path}")
+
         elif mode == 'predict' or mode == 'evaluate':
-            if not os.path.exists(studio_ohe_path):
-                raise FileNotFoundError(f"Studio OHE not found at {studio_ohe_path}.")
-            studio_ohe = joblib.load(studio_ohe_path)
-            studio_encoded_arr = studio_ohe.transform(studio_data_for_ohe)
-        else: raise ValueError('mode error')
+            if not os.path.exists(prodco_mlb_path):
+                raise FileNotFoundError(f"Production Company MLB not found at {prodco_mlb_path}. Please run preprocessing in 'train' mode first.")
+            prodco_mlb = joblib.load(prodco_mlb_path) # 저장된 mlb를 불러옵니다.
 
-        studio_cols_generated = [f"{config.STUDIO_OHE_PREFIX}{cat}" for cat in studio_ohe.categories_[0]]
-        studio_encoded_df = pd.DataFrame(studio_encoded_arr, columns=studio_cols_generated,index=df.index)
-        df = pd.concat([df,studio_encoded_df],axis=1)
-        df = df.drop(config.ORIG_STUDIO_COL,axis=1,errors='ignore')
-    return df, studio_cols_generated
+            # 불러온 mlb를 사용해 데이터를 변환합니다. (학습 때와 동일한 상위 N개 제작사 목록 사용)
+            # transform은 학습 때 보지 못한 제작사는 자동으로 무시합니다.
+            prodco_encoded = pd.DataFrame(prodco_mlb.transform(df['prodco_list']),
+                                          columns=[f"{config.PRODUCTION_COMPANY_MLB_PREFIX}{cls}" for cls in prodco_mlb.classes_],
+                                          index=df.index)
+        else: raise ValueError("mode should be 'train', 'evaluate', or 'predict'")
+
+        # 원래 데이터프레임(df)에 새로 만들어진 제작사 열들(prodco_encoded)을 합칩니다.
+        df = pd.concat([df, prodco_encoded], axis=1)
+        # 원래의 제작사 관련 열들(ORIG_PRODUCTION_COMPANY_COL, prodco_list)은 이제 필요 없으므로 삭제합니다.
+        df = df.drop([config.ORIG_PRODUCTION_COMPANY_COL, 'prodco_list'], axis=1, errors='ignore')
+        prodco_cols_generated = [f"{config.PRODUCTION_COMPANY_MLB_PREFIX}{cls}" for cls in prodco_mlb.classes_]
+
+    return df, prodco_cols_generated
+
 
 def preprocess_numerical_features(df, mode='train'):
     """
@@ -324,7 +368,7 @@ def run_preprocessing(raw_data_path, processed_data_path, mode='train'):
 
     # 3. 피처별 전처리 (수치형, 범주형(장르))
     df, lang_onehot_cols = preprocess_language_onehot(df, mode=mode) # 언어 전처리 추가
-    df, studio_onehot_cols = preprocess_studio_onehot(df,mode = mode)
+    df, prodco_cols = preprocess_production_company_features(df, mode=mode) # 제작사 전처리 추가
     df, month_onehot_cols = process_release_date_and_month_onehot(df, mode=mode) # 수정된 함수 호출
     df = preprocess_numerical_features(df, mode=mode)
     df, genre_cols = preprocess_genre_features(df, mode=mode) # 장르 처리 후 생성된 열 이름들도 받음
@@ -358,7 +402,7 @@ def run_preprocessing(raw_data_path, processed_data_path, mode='train'):
 
     print(f"--- Preprocessing '{mode}' mode finished ---")
     # 이제 wide 파트에 사용될 컬럼은 NUMERICAL_FEATURES + genre_cols + month_onehot_cols
-    all_wide_cols = config.NUMERICAL_FEATURES + genre_cols + month_onehot_cols + lang_onehot_cols + studio_onehot_cols
+    all_wide_cols = config.NUMERICAL_FEATURES + genre_cols + month_onehot_cols + lang_onehot_cols + prodco_cols
     return df, all_wide_cols # wide 파트 컬럼명 리스트 반환
 
 if __name__ == '__main__':
