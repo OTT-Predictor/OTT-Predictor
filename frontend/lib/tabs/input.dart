@@ -245,7 +245,7 @@ class _InputTabState extends State<InputTab> {
                   try {
                     final response = await http.post(
                       Uri.parse(
-                        'http://localhost:8000/predict',
+                        'http://127.0.0.1:8000/predict',
                       ),
                       headers: {
                         'Content-Type':

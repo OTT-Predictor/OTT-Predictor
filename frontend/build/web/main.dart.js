@@ -78234,7 +78234,7 @@ if(a==null)a=A.b([],t.s)
 a0=t.N
 m=A.ar(["title",a3,"synopsis",a4,"keywords",g,"runtime",f,"release_year",e,"release_month",d,"release_day",c,"language",b,"company",a,"genre",a2.b],a0,t.X)
 p=4
-a2=A.ia("http://localhost:8000/predict")
+a2=A.ia("http://127.0.0.1:8000/predict")
 a0=A.ar(["Content-Type","application/json"],a0,a0)
 s=7
 return A.a0(A.aKt(a2,B.cT.Qb(m,null),a0),$async$$0)
