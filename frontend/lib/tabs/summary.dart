@@ -19,7 +19,6 @@ class _SummaryInputState
   final TextEditingController _controller =
       TextEditingController();
 
-  /// 간단한 XSS 필터링: <태그> 제거
   String sanitize(String input) {
     return input.replaceAll(
       RegExp(r'<[^>]*>'),
@@ -52,9 +51,7 @@ class _SummaryInputState
           ),
           onChanged: (value) {
             final clean = sanitize(value);
-            widget.onChanged(
-              clean,
-            ); // 클린된 내용 외부로 전달
+            widget.onChanged(clean);
           },
         ),
       ],

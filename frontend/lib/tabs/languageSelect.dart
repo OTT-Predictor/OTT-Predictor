@@ -126,7 +126,7 @@ class _LanguageSelectorState
           onChanged: (value) {
             setState(() {
               selectedCode = value;
-              widget.onChanged(value); // 외부로 전달
+              widget.onChanged(value);
             });
           },
         ),

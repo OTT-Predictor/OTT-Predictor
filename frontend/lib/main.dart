@@ -112,7 +112,6 @@ class _mainpageState extends State<mainpage> {
                 children: [
                   SizedBox(height: 100),
 
-                  //버튼
                   Container(
                     height: 60,
                     padding: EdgeInsets.symmetric(
@@ -153,7 +152,7 @@ class _mainpageState extends State<mainpage> {
                                       topLeft:
                                           Radius.circular(
                                             16,
-                                          ), // 왼쪽 위 둥글게
+                                          ),
                                     ),
                               ),
                               child: const Center(
@@ -192,7 +191,7 @@ class _mainpageState extends State<mainpage> {
                                       topRight:
                                           Radius.circular(
                                             16,
-                                          ), // 오른쪽 위 둥글게
+                                          ),
                                     ),
                               ),
                               child: const Center(
@@ -208,7 +207,6 @@ class _mainpageState extends State<mainpage> {
                       ],
                     ),
                   ),
-                  //화면전환
                   AnimatedSwitcher(
                     duration: const Duration(
                       milliseconds: 300,
@@ -216,8 +214,9 @@ class _mainpageState extends State<mainpage> {
                     child:
                         isNotSelectedTabisRanking
                             ? const InputTab()
-                            : const RankingTab(),
+                            : RankingPage(),
                   ),
+                  SizedBox(height: 50),
                 ],
               ),
             ),

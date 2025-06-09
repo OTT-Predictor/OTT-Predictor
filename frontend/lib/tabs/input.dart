@@ -205,7 +205,7 @@ class _InputTabState extends State<InputTab> {
                           (_) => AlertDialog(
                             title: Text('오류'),
                             content: Text(
-                              '입력이 안된 내용이 있습니다.',
+                              '내용을 더 입력해주세요.',
                             ),
                             actions: [
                               TextButton(
@@ -246,7 +246,7 @@ class _InputTabState extends State<InputTab> {
                     final response = await http.post(
                       Uri.parse(
                         'http://127.0.0.1:8000/predict',
-                      ), // 또는 실제 서버 주소
+                      ),
                       headers: {
                         'Content-Type':
                             'application/json',

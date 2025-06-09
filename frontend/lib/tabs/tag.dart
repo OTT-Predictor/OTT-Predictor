@@ -21,9 +21,7 @@ class _KeywordInputState
   final List<String> _keywords = [];
 
   void _tryAddKeyword(String value) {
-    final parts = value.split(
-      RegExp(r'[,\n]'),
-    ); // 쉼표나 Enter(\n) 기준 분리
+    final parts = value.split(RegExp(r'[,\n]'));
     for (var part in parts) {
       final keyword = part.trim();
       if (keyword.isNotEmpty &&
@@ -34,7 +32,7 @@ class _KeywordInputState
       }
     }
     _controller.clear();
-    widget.onChanged(_keywords); // 외부 전달
+    widget.onChanged(_keywords);
   }
 
   void _removeKeyword(String keyword) {
