@@ -87,7 +87,7 @@ class _mainpageState extends State<mainpage> {
                   MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'OTTS',
+                  'OTTS v.3',
                   style: TextStyle(
                     fontFamily: 'Pretendard',
                     fontSize: 36,

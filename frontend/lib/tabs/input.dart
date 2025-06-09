@@ -258,10 +258,11 @@ class _InputTabState extends State<InputTab> {
 
                     if (response.statusCode ==
                         200) {
+                      final decoded = utf8.decode(
+                        response.bodyBytes,
+                      ); // ← 여기!
                       final responseData =
-                          jsonDecode(
-                            response.body,
-                          );
+                          jsonDecode(decoded);
                       final probability =
                           responseData['success_probability'];
                       final verdict =
