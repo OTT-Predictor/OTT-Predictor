@@ -205,7 +205,7 @@ class _InputTabState extends State<InputTab> {
                           (_) => AlertDialog(
                             title: Text('오류'),
                             content: Text(
-                              '입력이 안된 내용이 있습니다.',
+                              '내용을 더 입력해주세요.',
                             ),
                             actions: [
                               TextButton(
@@ -245,16 +245,11 @@ class _InputTabState extends State<InputTab> {
                   try {
                     final response = await http.post(
                       Uri.parse(
-                        'http://3.107.99.199:8080/predict',
-                      ), // 또는 실제 서버 주소
+                        'http://localhost:8000/predict',
+                      ),
                       headers: {
                         'Content-Type':
                             'application/json',
-                        'Origin':
-                            'https://happylesserpanda.github.io',
-                         'x-requested-with':
-                            'XMLHttpRequest',   
-                            
                       },
                       body: jsonEncode(
                         requestBody,

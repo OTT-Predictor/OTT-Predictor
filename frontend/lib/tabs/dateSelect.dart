@@ -66,7 +66,6 @@ class _ReleaseDateSelectorState
         const SizedBox(height: 8),
         Row(
           children: [
-            // 년도
             DropdownButton<int>(
               hint: const Text("년도"),
               value: selectedYear,
@@ -86,7 +85,7 @@ class _ReleaseDateSelectorState
               },
             ),
             const SizedBox(width: 16),
-            // 월
+
             DropdownButton<int>(
               hint: const Text("월"),
               value: selectedMonth,
@@ -106,7 +105,7 @@ class _ReleaseDateSelectorState
               },
             ),
             const SizedBox(width: 16),
-            // 일
+
             DropdownButton<int>(
               hint: const Text("일"),
               value: selectedDay,
