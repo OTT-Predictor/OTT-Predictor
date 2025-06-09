@@ -88,7 +88,25 @@ class _RankingPageState
         ),
         color: Colors.white,
         width: double.infinity,
-        child:
+        child: Column(
+          children: [
+            Column(
+              crossAxisAlignment:
+                  CrossAxisAlignment.start,
+              children: [
+                SizedBox(height: 48),
+                SizedBox(
+                  width: double.infinity,
+                  child: Text(
+                    "랭킹",
+                    style: titleText,
+                  ),
+                ),
+                SizedBox(height: 32),
+                Divider(height: 1),
+              ],
+            ),
+
             _isLoading
                 ? Padding(
                   padding: const EdgeInsets.all(
@@ -157,6 +175,8 @@ class _RankingPageState
                     );
                   },
                 ),
+          ],
+        ),
       ),
     );
   }
