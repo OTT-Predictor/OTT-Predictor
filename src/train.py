@@ -313,14 +313,6 @@ def main():
     run.finish()
     # --------------------
 
-    # (선택 사항) 학습이 모두 끝난 후, 가장 성능이 좋았던 모델을 불러와서
-    # 별도의 테스트 데이터셋으로 최종 성능을 평가할 수 있습니다.
-    # print("\n--- Evaluating on Test Set (using best model) ---")
-    # # 테스트 데이터셋 로더 준비 (test_dataset, test_loader - 여기서는 생략)
-    # # best_model, _ = load_checkpoint(config.MODEL_WEIGHTS_PATH, model, device=device) # 옵티마이저 상태는 필요 없음
-    # # test_loss, test_metrics = evaluate(best_model, test_loader, criterion, device)
-    # # print(f"Test Loss: {test_loss:.4f} | Test Accuracy: {test_metrics['accuracy']:.4f} | Test F1: {test_metrics['f1_score']:.4f}")
-
 if __name__ == '__main__':
     # 이 파일을 직접 실행할 때 (python -m src.train 또는 python src/train.py)
     # main() 함수가 호출되어 전체 학습 과정이 시작됩니다.
