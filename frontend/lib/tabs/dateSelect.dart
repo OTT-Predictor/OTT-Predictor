@@ -23,8 +23,8 @@ class _ReleaseDateSelectorState
   List<int> get years {
     final currentYear = DateTime.now().year;
     return List.generate(
-      51,
-      (index) => currentYear + 51 - index,
+      91,
+      (index) => 1960 + 91 - index,
     );
   }
 
