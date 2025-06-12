@@ -77914,7 +77914,7 @@ A.Ey.prototype={
 al(){return new A.UY()}}
 A.UY.prototype={
 L(a){var s,r,q,p=this,o=null,n="Pretendard",m=A.bT(a,o,t.w).w.a.a,l=$.az3(),k=m>1080,j=k?(m-1080)/2:20,i=t.p
-j=A.hG(A.rt(A.b([A.bG("OTTS v.4",o,o,o,A.eN(o,o,o,o,o,o,o,o,n,o,o,36,o,o,B.iQ,o,o,!0,o,o,o,o,o,o,o,o),o,o),new A.rN(o),A.bG("\uacf5\uac1cSW\ud504\ub85c\uc81d\ud2b8 4\uc870",o,o,o,A.eN(o,o,o,o,o,o,o,o,n,o,o,24,o,o,B.D,o,o,!0,o,o,o,o,o,o,o,o),o,o)],i),B.eh,B.ad),B.w,B.k,o,64,o,new A.ap(j,0,j,0),1/0)
+j=A.hG(A.rt(A.b([A.bG("Cinecast",o,o,o,A.eN(o,o,o,o,o,o,o,o,n,o,o,36,o,o,B.iQ,o,o,!0,o,o,o,o,o,o,o,o),o,o),new A.rN(o),A.bG("\uacf5\uac1cSW\ud504\ub85c\uc81d\ud2b8 4\uc870",o,o,o,A.eN(o,o,o,o,o,o,o,o,n,o,o,24,o,o,B.D,o,o,!0,o,o,o,o,o,o,o,o),o,o)],i),B.eh,B.ad),B.w,B.k,o,64,o,new A.ap(j,0,j,0),1/0)
 s=A.cE(o,100,o)
 k=k?(m-1080)/2:20
 r=p.d
