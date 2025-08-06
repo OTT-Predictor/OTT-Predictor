@@ -157,8 +157,14 @@ def main():
         if os.path.exists(config.LANGUAGE_OHE_PATH):
             lang_ohe = joblib.load(config.LANGUAGE_OHE_PATH)
             lang_ohe_cols_count = len(lang_ohe.categories_[0])
+
+        prodco_cols_count = 0
+        # 제작사 MLB 로드하여 컬럼 수 계산 추가
+        if os.path.exists(config.PRODCO_MLB_PATH):
+            prodco_mlb = joblib.load(config.PRODCO_MLB_PATH)
+            prodco_cols_count = len(prodco_mlb.classes_)
         
-        actual_wide_input_dim = numerical_cols_count + genre_cols_count + month_ohe_cols_count + lang_ohe_cols_count
+        actual_wide_input_dim = numerical_cols_count + genre_cols_count + month_ohe_cols_count + lang_ohe_cols_count + prodco_cols_count
 
     print(f"Determined WIDE_INPUT_DIM for the model: {actual_wide_input_dim}")
 
@@ -220,7 +226,7 @@ def main():
     # 조기 종료는 Sweep 실행 시간을 줄이는 데 매우 중요
     best_val_loss_for_early_stop = float('inf')
     epochs_no_improve = 0
-    patience_early_stop = 7 # 조기 종료 patience (Sweep 시에는 짧게 설정하는 것이 좋음)
+    patience_early_stop = 15 # 조기 종료 patience (Sweep 시에는 짧게 설정하는 것이 좋음)
     best_val_f1 = 0.0 # 가장 좋았던 검증 F1 점수를 기록할 변수 (또는 다른 지표 사용 가능)
     history = { # 학습 과정을 기록할 딕셔너리
         'train_loss': [],
@@ -306,14 +312,6 @@ def main():
     # --- W&B 실험 종료 ---
     run.finish()
     # --------------------
-
-    # (선택 사항) 학습이 모두 끝난 후, 가장 성능이 좋았던 모델을 불러와서
-    # 별도의 테스트 데이터셋으로 최종 성능을 평가할 수 있습니다.
-    # print("\n--- Evaluating on Test Set (using best model) ---")
-    # # 테스트 데이터셋 로더 준비 (test_dataset, test_loader - 여기서는 생략)
-    # # best_model, _ = load_checkpoint(config.MODEL_WEIGHTS_PATH, model, device=device) # 옵티마이저 상태는 필요 없음
-    # # test_loss, test_metrics = evaluate(best_model, test_loader, criterion, device)
-    # # print(f"Test Loss: {test_loss:.4f} | Test Accuracy: {test_metrics['accuracy']:.4f} | Test F1: {test_metrics['f1_score']:.4f}")
 
 if __name__ == '__main__':
     # 이 파일을 직접 실행할 때 (python -m src.train 또는 python src/train.py)
